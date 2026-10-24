@@ -20,6 +20,7 @@
 <!-- Styles : theme.css d'abord (les variables), puis la mise en page -->
 <link rel="stylesheet" href="css/theme.css">
 <link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="correcteur/correcteur.css">
 <link rel="stylesheet" href="css/impression.css">
 </head>
 <body>
@@ -114,6 +115,7 @@
         <span class="plan-liens">
           <button class="lien-discret" type="button" id="bouton-frise">Frise des événements</button>
           <button class="lien-discret" type="button" id="bouton-remplacer" title="Chercher un mot dans tout le roman, et le remplacer (Ctrl+F, Ctrl+H)">Rechercher et remplacer</button>
+          <button class="lien-discret" type="button" id="bouton-orthographe" aria-haspopup="dialog" title="Correction orthographique et dictionnaire personnel">Orthographe et dictionnaire</button>
           <button class="lien-discret" type="button" id="bouton-pdf" title="Exporter le texte en PDF, ePub ou Word (Ctrl+P : PDF)">Exporter (PDF, ePub, Word)</button>
         </span>
       </div>
@@ -203,7 +205,8 @@
           <!-- Côte à côte : le nom de chaque colonne -->
           <p class="cote-titre cote-titre-notes" aria-hidden="true">Notes</p>
           <p class="cote-titre cote-titre-redige" aria-hidden="true">Rédigé</p>
-          <!-- Calques derrière le texte (un par zone) : les noms des fiches y sont soulignés en couleur (js/surlignage.js) -->
+          <!-- Calques derrière le texte (un par zone) : les noms des fiches y sont soulignés en couleur (js/surlignage.js),
+               et les fautes d'orthographe d'une vague rouge (js/orthographe.js) -->
           <div class="calque" id="calque-notes" aria-hidden="true"><div class="calque-texte"></div></div>
           <div class="calque" id="calque-redige" aria-hidden="true"><div class="calque-texte"></div></div>
           <!-- … et les passages trouvés par « Rechercher » y sont surlignés (js/remplacer.js) -->
@@ -298,6 +301,7 @@
         <li>Suivre les événements sur une frise, et voir qui apparaît où</li>
         <li>Écrire sur deux appareils : exporter sur l'un, fusionner sur l'autre</li>
         <li>Exporter en PDF, mise en page de livre (<span class="mono">Ctrl+P</span>), en ePub pour une liseuse, ou en Word pour faire relire</li>
+        <li>Repérer les fautes d'orthographe, même hors ligne : les noms de vos fiches ne sont jamais signalés</li>
       </ul>
 
       <hr class="pointilles">
@@ -311,6 +315,10 @@
         <p><a class="lien-portfolio" href="https://ferrusdantioch.github.io/omni-systeme/" target="_blank" rel="noopener">Découvrir l'Omni-système : le portfolio ↗</a></p>
         <!-- Licence du code : texte complet dans le fichier LICENSE du dépôt. -->
         <p>© 2026 Ferrus Dantioch — <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.fr" target="_blank" rel="noopener noreferrer">Creative Commons BY-NC-ND 4.0</a> : partage autorisé en citant l'auteur, sans usage commercial ni modification.</p>
+        <!-- Le dictionnaire du correcteur a sa propre licence (MPL 2.0) : voir correcteur/LICENCE-dictionnaire.txt. -->
+        <p class="discret petit">Correcteur orthographique : dictionnaire français « Classique » 7.5 d'Olivier R. et des contributeurs de
+          <a href="https://grammalecte.net/" target="_blank" rel="noopener noreferrer">Grammalecte</a> (Dicollecte), sous licence
+          <a href="correcteur/LICENCE-dictionnaire.txt" target="_blank" rel="noopener">Mozilla Public License 2.0</a>.</p>
         <!-- Retours : une adresse-alias (Proton) créée pour ça. Le lien ouvre seulement
              l'application de messagerie, adresse et sujet déjà remplis : rien ne part tout seul. -->
         <p>Une idée, une remarque, un souci ? Vos retours sont les bienvenus :

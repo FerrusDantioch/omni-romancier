@@ -11,6 +11,9 @@
 // Seuls les fichiers d'Omni-Romancier sont concernés : un autre site ouvert à la même adresse
 // (localhost:8000) passe sans être touché, et ne peut rien remplacer dans la réserve.
 //
+// Exception : le dictionnaire du correcteur orthographique (gros fichier, dont le nom change avec sa
+// version) est téléchargé une seule fois, puis toujours pris dans la réserve (voir DURABLES).
+//
 // Les romans, eux, ne sont jamais ici : ils sont dans la base IndexedDB.
 // =====================================================================
 
@@ -26,6 +29,14 @@ const FICHIERS = [
   "css/theme.css",
   "css/app.css",
   "css/impression.css",
+  "correcteur/correcteur.css",
+  "correcteur/correcteur.js",
+  "correcteur/moteur.js",
+  "correcteur/travailleur.js",
+  "correcteur/bulle.js",
+  "correcteur/liste.js",
+  "correcteur/mots-fr-7.5.txt",
+  "correcteur/LICENCE-dictionnaire.txt",
   "js/app.js",
   "js/annulation.js",
   "js/bibliotheque.js",
@@ -39,6 +50,7 @@ const FICHIERS = [
   "js/fusion.js",
   "js/hors-ligne.js",
   "js/onglets.js",
+  "js/orthographe.js",
   "js/outils.js",
   "js/panneau.js",
   "js/plan.js",
@@ -60,9 +72,15 @@ const FICHIERS = [
   "assets/icone-maskable-512.png",
 ];
 
+// Fichiers téléchargés une seule fois : on ne les retélécharge pas à chaque ouverture, et on les
+// prend toujours dans la réserve (leur nom change quand leur contenu change)
+const DURABLES = ["correcteur/mots-fr-7.5.txt"];
+
 // Adresses complètes (le dossier de l'application peut être n'importe où)
 const adresse = (f) => new URL(f, self.location).href;
 const ADRESSES = new Set(FICHIERS.map(adresse));
+const ADRESSES_DURABLES = new Set(DURABLES.map(adresse));
+const ANCIEN_DICTIONNAIRE = /\/correcteur\/mots-[^/]*\.txt$/;
 const ACCUEIL = adresse("./");
 const PAGE = adresse("index.html");
 
@@ -103,9 +121,15 @@ self.addEventListener("message", (e) => {
 async function actualiser() {
   let erreur = null;
   try {
-    const recus = await Promise.all(FICHIERS.map(telecharger));
     const reserve = await caches.open(RESERVE);
+    const aTelecharger = [];
+    for (const f of FICHIERS) {
+      if (!(ADRESSES_DURABLES.has(adresse(f)) && await reserve.match(adresse(f)))) aTelecharger.push(f);
+    }
+    const recus = await Promise.all(aTelecharger.map(telecharger));
     await Promise.all(recus.map(([f, reponse]) => reserve.put(f, reponse)));
+    // Un dictionnaire d'une ancienne version : il ne sert plus
+    for (const r of await reserve.keys()) if (ANCIEN_DICTIONNAIRE.test(r.url) && !ADRESSES.has(r.url)) await reserve.delete(r);
     injoignableJusqua = 0;
   } catch (err) {
     erreur = err.message;
@@ -157,6 +181,11 @@ self.addEventListener("fetch", (e) => {
 
 async function repondre(demande, cle) {
   const copie = () => caches.match(cle, { cacheName: RESERVE });
+  // Le dictionnaire : la copie en réserve s'il y en a une (inutile de retélécharger 2 Mo)
+  if (ADRESSES_DURABLES.has(cle)) {
+    const enReserve = await copie();
+    if (enReserve) return enReserve;
+  }
   // Le serveur n'a pas répondu à l'ouverture de la page : inutile de le réessayer pour chacun
   // des fichiers qui suivent (sur Windows, chaque essai peut prendre deux secondes).
   // L'ouverture de la page, elle, réessaie toujours.

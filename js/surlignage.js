@@ -15,12 +15,16 @@
 // et à chaque frappe on ne refait que les lignes qui ont changé (sans jamais rien retirer de la page :
 // voir majCalque, c'est ce qui garde Ctrl+Z intact).
 // Chaque zone de texte (Notes, Rédigé) a son propre calque : côte à côte, les deux sont colorées.
+//
+// Le même calque souligne aussi les fautes d'orthographe (vague rouge adoucie, voir orthographe.js) :
+// toucher un mot souligné ouvre alors la bulle de corrections.
 // =====================================================================
 
 import { el, STYLES_DU_TEXTE, placeDuTexte } from "./outils.js";
 import { etat, ecouter, trouverFiche } from "./etat.js";
 import { CATEGORIES, ouvrirFiche, basculerVolet } from "./panneau.js";
 import { estReperable, preparerNoms, nomsDansLeTexte, signatureDesNoms } from "./reperage.js";
+import { correcteur, fautesDeLigne, initialiserOrthographe, proposerCorrections, fermerBulle as fermerCorrections, replacerBulle } from "./orthographe.js";
 
 // Le choix « noms en couleur », propre à cet appareil (gardé dans le navigateur)
 const CLE_CHOIX = "atelier-surlignage";
@@ -62,12 +66,18 @@ export function initialiserSurlignage() {
       aFaire: false, toutRefaire: false,
     };
     copies.push(copie);
-    zone.addEventListener("input", () => { cacherBulle(); planifier(copie); });
+    zone.addEventListener("input", () => { cacherBulle(); fermerCorrections(); planifier(copie); });
     zone.addEventListener("scroll", () => suivreDefilement(copie));
     zone.addEventListener("click", (e) => surClic(e, copie));
     zone.addEventListener("keydown", (e) => { if (!["Shift", "Control", "Alt", "Meta"].includes(e.key)) cacherBulle(); });
+    // Le curseur a peut-être quitté le mot que l'on tapait : il peut être souligné
+    zone.addEventListener("keyup", () => { if (copie.differee) majFautes(copie); });
+    zone.addEventListener("pointerup", () => { if (copie.differee) majFautes(copie); });
     // On ne tape plus dans ce texte : le moment de faire le ménage du calque, sans gêner Ctrl+Z
-    zone.addEventListener("blur", () => { if (copie.aNettoyer) planifier(copie, true); });
+    zone.addEventListener("blur", () => {
+      if (copie.aNettoyer) planifier(copie, true);
+      else if (copie.differee) majFautes(copie);
+    });
     // Taille changée (fenêtre, volets, concentration, barre de défilement…) : les lignes se recoupent.
     // Deux surveillances : la place du texte (une barre de défilement qui apparaît la réduit),
     // et la taille totale (sur grand écran, élargir la fenêtre n'élargit que les marges du texte).
@@ -78,6 +88,11 @@ export function initialiserSurlignage() {
   // (Notes, Rédigé ou les deux : chaque calque regarde si sa zone de texte est affichée)
   ecouter("mode-affiche", () => { cacherBulle(); planifier(); });
   ecouter("fiches-changees", () => planifier()); // (tout est refait seulement si un nom a changé)
+  // Correcteur : réglage changé (tout est refait), ou nouvelles fautes connues (seules les lignes concernées)
+  initialiserOrthographe((tout) => {
+    if (tout) planifier(null, true);
+    else for (const c of copies) majFautes(c);
+  });
 
   const bulle = $("bulle-noms");
   bulle.addEventListener("mousedown", (e) => e.preventDefault()); // toucher la bulle ne retire pas le curseur du texte
@@ -122,7 +137,8 @@ function planifier(copie = null, tout = false) {
 
 function majCalque(copie, tout, desNoms) {
   const { zone, calque, interieur } = copie;
-  const visible = actif && desNoms && !!etat.sceneId && !$("editeur-plein").hidden && !zone.hidden;
+  copie.avecNoms = actif && desNoms;
+  const visible = (copie.avecNoms || correcteur.actif) && !!etat.sceneId && !$("editeur-plein").hidden && !zone.hidden;
   calque.hidden = !visible;
   if (!visible) {
     // Zone de texte cachée (ou rien à colorer) : son calque est vidé, il sera refait à son retour
@@ -136,14 +152,15 @@ function majCalque(copie, tout, desNoms) {
   copie.signature = signature;
   copierStyles(copie);
   const nouvelles = zone.value.split("\n");
+  noterCurseur(copie);
 
   // Tout refaire (autre scène, autre mode, autres noms…) : on cherche dans tout le texte d'un coup
   // (plus rapide), puis on donne à chaque ligne ses noms. (Un nom coupé par un retour à la ligne n'est pas souligné.)
   if (tout) {
-    const parLigne = repartir(nomsDansLeTexte(zone.value, noms), nouvelles);
+    const parLigne = repartir(copie.avecNoms ? nomsDansLeTexte(zone.value, noms) : [], nouvelles);
     const morceau = document.createDocumentFragment();
     copie.aNettoyer = false;
-    copie.elements = nouvelles.map((texte, i) => morceau.appendChild(remplirLigne(copie, document.createElement("div"), texte, parLigne[i])));
+    copie.elements = nouvelles.map((texte, i) => morceau.appendChild(remplirLigne(copie, document.createElement("div"), texte, parLigne[i], i)));
     interieur.replaceChildren(morceau);
     copie.lignes = nouvelles;
     suivreDefilement(copie);
@@ -162,13 +179,13 @@ function majCalque(copie, tout, desNoms) {
   while (fin < max - debut && lignes[lignes.length - 1 - fin] === nouvelles[nouvelles.length - 1 - fin]) fin++;
   const finAncien = lignes.length - fin, finNouveau = nouvelles.length - fin;
   const communes = Math.min(finAncien, finNouveau) - debut;
-  for (let i = debut; i < debut + communes; i++) remplirLigne(copie, elements[i], nouvelles[i], nomsDansLeTexte(nouvelles[i], noms));
+  for (let i = debut; i < debut + communes; i++) remplirLigne(copie, elements[i], nouvelles[i], nomsDeLaLigne(copie, nouvelles[i]), i);
   if (finNouveau > finAncien) {
     // Des lignes en plus : ajoutées juste avant la première ligne restée identique à la fin
     const suivante = elements[finAncien] || null;
     const ajout = [];
     for (let i = debut + communes; i < finNouveau; i++) {
-      const ligne = remplirLigne(copie, document.createElement("div"), nouvelles[i], nomsDansLeTexte(nouvelles[i], noms));
+      const ligne = remplirLigne(copie, document.createElement("div"), nouvelles[i], nomsDeLaLigne(copie, nouvelles[i]), i);
       interieur.insertBefore(ligne, suivante);
       ajout.push(ligne);
     }
@@ -197,10 +214,56 @@ function repartir(trouves, lignesDuTexte) {
   return parLigne;
 }
 
-// Écrit une ligne (un paragraphe) du calque, avec ses noms soulignés.
-// Une ligne est toujours faite ainsi : texte, nom, texte, nom, …, texte. On réutilise ce qui existe
-// (on change seulement les textes) ; un nom en trop devient vide, il resservira plus tard.
-function remplirLigne(copie, ligne, texte, trouves) {
+const nomsDeLaLigne = (copie, texte) => (copie.avecNoms ? nomsDansLeTexte(texte, noms) : []);
+
+// Où est le curseur (ligne, colonne) si l'on écrit dans ce texte : le mot que l'on est en train
+// de taper n'est pas souligné tant que le curseur est juste à sa fin
+function noterCurseur(copie) {
+  const { zone } = copie;
+  copie.curseur = null;
+  copie.differee = false;
+  if (document.activeElement !== zone || zone.selectionStart !== zone.selectionEnd) return;
+  const avant = zone.value.slice(0, zone.selectionStart);
+  const debutLigne = avant.lastIndexOf("\n") + 1;
+  let ligne = 0;
+  for (let i = avant.indexOf("\n"); i >= 0; i = avant.indexOf("\n", i + 1)) ligne++;
+  copie.curseur = { ligne, colonne: zone.selectionStart - debutLigne };
+}
+
+// Les fautes d'une ligne, à souligner (sauf le mot en cours de frappe, et ce qui touche un nom)
+function fautesAffichees(copie, texte, numero, nomsTrouves) {
+  let fautes = fautesDeLigne(texte);
+  const c = copie.curseur;
+  if (c && c.ligne === numero && fautes.some((f) => f.fin === c.colonne)) {
+    fautes = fautes.filter((f) => f.fin !== c.colonne);
+    copie.differee = true;
+  }
+  return nomsTrouves.length ? fautes.filter((f) => !nomsTrouves.some((n) => f.debut < n.fin && n.debut < f.fin)) : fautes;
+}
+
+// Les fautes connues ont changé (vérification terminée, mot ajouté au dictionnaire…) : seules
+// les lignes dont les fautes ont changé sont réécrites (sans rien retirer de la page : voir majCalque)
+function majFautes(copie) {
+  if (!copie.construit || copie.calque.hidden) return;
+  noterCurseur(copie);
+  copie.elements.forEach((ligne, i) => {
+    const fautes = fautesAffichees(copie, copie.lignes[i], i, ligne.noms || []);
+    if (signatureDesFautes(fautes) !== ligne.fautes) remplirLigne(copie, ligne, copie.lignes[i], ligne.noms || [], i, fautes);
+  });
+}
+
+const signatureDesFautes = (fautes) => fautes.map((f) => f.debut + "-" + f.fin).join(" ");
+
+// Écrit une ligne (un paragraphe) du calque, avec ses noms et ses fautes soulignés.
+// Une ligne est toujours faite ainsi : texte, marque, texte, marque, …, texte. On réutilise ce qui existe
+// (on change seulement les textes) ; une marque en trop devient vide, elle resservira plus tard.
+function remplirLigne(copie, ligne, texte, nomsTrouves, numero, fautes = fautesAffichees(copie, texte, numero, nomsTrouves)) {
+  // (gardés pour pouvoir réécrire seulement les fautes plus tard : voir majFautes)
+  ligne.noms = nomsTrouves;
+  ligne.fautes = signatureDesFautes(fautes);
+  const trouves = fautes.length
+    ? [...nomsTrouves, ...fautes.map((f) => ({ ...f, faute: true }))].sort((a, b) => a.debut - b.debut)
+    : nomsTrouves;
   const noeuds = ligne.childNodes;
   if (!noeuds.length) ligne.append(document.createTextNode(""));
   for (let n = (noeuds.length - 1) / 2; n < trouves.length; n++) {
@@ -215,10 +278,12 @@ function remplirLigne(copie, ligne, texte, trouves) {
     const marque = noeuds[2 * j + 1], n = trouves[j];
     if (n) {
       ecrire(marque.firstChild, texte.slice(n.debut, n.fin));
-      const classe = n.fiches.every((f) => f.categorie === "lieu") ? "lieu" : "";
+      const classe = n.faute ? "faute" : n.fiches.every((f) => f.categorie === "lieu") ? "lieu" : "";
       if (marque.className !== classe) marque.className = classe;
-      const ids = n.fiches.map((f) => f.id).join(" ");
+      // Un nom : les fiches qu'il désigne ; une faute : sa place dans la ligne
+      const ids = n.faute ? "" : n.fiches.map((f) => f.id).join(" ");
       if (marque.dataset.fiches !== ids) marque.dataset.fiches = ids;
+      if (n.faute) marque.dataset.debut = n.debut;
       ecrire(noeuds[2 * j + 2], texte.slice(n.fin, trouves[j + 1] ? trouves[j + 1].debut : texte.length));
     } else {
       ecrire(marque.firstChild, "");
@@ -252,6 +317,7 @@ function suivreDefilement(copie) {
   copie.calque.scrollTop = copie.zone.scrollTop;
   copie.calque.scrollLeft = copie.zone.scrollLeft;
   if (bulleSur?.copie === copie) placerBulle();
+  replacerBulle();
 }
 
 // =====================================================================
@@ -261,9 +327,25 @@ function suivreDefilement(copie) {
 function surClic(e, copie) {
   cacherBulle();
   const { zone } = copie;
-  if (!actif || !copie.construit || copie.calque.hidden || zone.selectionStart !== zone.selectionEnd) return;
+  if (!copie.construit || copie.calque.hidden || zone.selectionStart !== zone.selectionEnd) return;
   const trouve = marqueSous(copie, e.clientX, e.clientY);
   if (!trouve) return;
+  // Une faute d'orthographe : la bulle de corrections
+  if (trouve.marque.classList.contains("faute")) {
+    const { marque, morceau } = trouve;
+    const ligne = marque.parentNode;
+    const numero = copie.elements.indexOf(ligne);
+    let position = Number(marque.dataset.debut);
+    for (let i = 0; i < numero; i++) position += copie.lignes[i].length + 1;
+    proposerCorrections(zone, position, marque.textContent, () => {
+      if (marque.parentNode !== ligne || !marque.classList.contains("faute") || copie.calque.hidden) return null;
+      const r = marque.getClientRects()[morceau];
+      const vue = copie.calque.getBoundingClientRect();
+      return r && r.bottom >= vue.top && r.top <= vue.bottom ? r : null; // mot sorti de la partie visible : la bulle se ferme
+    });
+    return;
+  }
+  if (!actif || document.body.classList.contains("concentration")) return;
   const ids = trouve.marque.dataset.fiches.split(" ").filter((id) => trouverFiche(id));
   if (!ids.length) return;
   if (e.ctrlKey || e.metaKey) { ouvrir(ids[0]); return; } // Ctrl+clic : la fiche s'ouvre tout de suite

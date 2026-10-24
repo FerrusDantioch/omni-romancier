@@ -29,6 +29,8 @@ sans rien installer d'autre (voir « Omni-Romancier en ligne » plus bas).
 - **Noms en couleur** : ces noms sont aussi soulignés directement dans le texte ; les toucher ouvre leur fiche.
 - **Nommé dans ces scènes** : sur la fiche d'un personnage ou d'un lieu, les scènes où il est nommé ;
   en toucher une l'ouvre, le nom sélectionné.
+- **Correcteur d'orthographe** français, même sans connexion : les fautes sont soulignées d'une vague
+  rouge adoucie, les toucher propose des corrections. Les noms des fiches ne sont jamais signalés.
 - **Rechercher et remplacer** (`Ctrl+F`) : un mot cherché dans tout le roman, chaque passage listé
   et surligné ; le remplacer un par un ou partout d'un coup (renommer un personnage…), et l'annuler.
 - **Export** d'une scène, d'un chapitre ou du roman : en **PDF** mis en page comme un livre,
@@ -179,6 +181,18 @@ Ouvrez un roman depuis la Bibliothèque. L'écran se divise en trois colonnes :
 - **Session** : la barre suit les mots ajoutés depuis le début de la session.
   La session redémarre chaque jour, ou avec « Nouvelle session ». L'objectif se change
   avec « Changer l'objectif ».
+- **Orthographe** : une demi-seconde après la dernière frappe, les mots inconnus sont soulignés
+  d'une fine vague rouge (le mot que vous êtes en train de taper attend que le curseur le quitte).
+  Toucher (ou cliquer) un mot souligné ouvre une bulle : jusqu'à 5 corrections (en toucher une
+  remplace le mot ; `Ctrl+Z` l'annule), **« Ajouter au dictionnaire »** (le mot ne sera plus jamais
+  souligné sur cet appareil) et **« Ignorer »** (jusqu'à la fermeture d'Omni-Romancier).
+  - Les **noms de vos fiches** (titres et « Autres noms ») sont acceptés d'office : inutile de les ajouter.
+  - Lien **« Orthographe et dictionnaire »** sous le titre du roman (sur téléphone : « ☰ Plan ») :
+    activer ou désactiver le correcteur, voir la liste des mots ajoutés, en ajouter, en retirer.
+  - Tout se passe sur l'appareil, même en mode avion. Le dictionnaire (environ 2 Mo) est téléchargé
+    une seule fois. Le dictionnaire personnel est gardé dans ce navigateur : il n'est pas inclus
+    dans « Exporter mes données ».
+  - Seule l'orthographe des mots est vérifiée, pas la grammaire ni les accords (« les maison »).
 - **Enregistrement** : automatique, en continu (« Enregistré ✓ » en bas à droite).
   Même si l'onglet se ferme en pleine phrase, le texte est récupéré à la réouverture.
   Si « Non enregistré ! » s'affiche (disque plein…), le texte est gardé en secours dans le navigateur
@@ -488,6 +502,8 @@ rechercher et remplacer.)
   n'imprime pas les numéros de page du PDF. Safari (Mac, iPad) n'a pas été testé.
 - La **coupure des mots** en fin de ligne dans le PDF dépend du navigateur (elle peut manquer).
 - **Sur téléphone** : testé en simulation (Chrome Android) ; l'iPhone et l'iPad (Safari) n'ont pas été testés.
+- **Correcteur d'orthographe** : idées pour plus tard, inclure le dictionnaire personnel dans
+  « Exporter mes données », et tenir compte de la fréquence des mots dans les suggestions.
 
 ## Omni-Romancier en ligne (GitHub Pages)
 
@@ -552,7 +568,8 @@ js/panneau.js       le panneau de consultation : onglets, fiches, épinglage, é
 js/recherche.js     la recherche rapide Ctrl+K
 js/remplacer.js     rechercher et remplacer dans tout le roman (Ctrl+F)
 js/reperage.js      les fiches nommées dans le texte (« Dans cette scène », « Nommé dans ces scènes »)
-js/surlignage.js    les noms en couleur dans le texte, et la bulle qui ouvre leur fiche
+js/surlignage.js    les noms en couleur dans le texte, et la bulle qui ouvre leur fiche (et les fautes soulignées)
+js/orthographe.js   le correcteur d'orthographe : réglage, noms des fiches acceptés, bulle de corrections
 js/frise.js         la frise des événements et « Qui apparaît où »
 js/export-pdf.js    la fenêtre « Exporter » et l'export PDF (le livre à imprimer)
 js/export-fichiers.js  l'export en ePub et en Word (.docx)
@@ -564,6 +581,8 @@ js/hors-ligne.js    le mode hors ligne et le bouton « Installer l'application �
 js/sauvegarde.js    les boutons d'export/import (fusion, annulation) et le rappel
 js/dialogues.js     les fenêtres de confirmation et les petits messages
 js/outils.js        petites fonctions partagées (compteur de mots, dates…)
+correcteur/    le correcteur d'orthographe, COMMUN avec Omni-Texte : ne pas le modifier ici
+               (il se modifie dans le dépôt omni-texte, puis se recopie : voir correcteur/LISEZ-MOI.md)
 fonts/         les polices (hors ligne)
 assets/        logos et icônes
 ```
@@ -593,6 +612,12 @@ Commons.
 
 Les polices (dossier `fonts/`) gardent leur propre licence : SIL Open Font
 License 1.1, texte complet dans `fonts/OFL.txt`.
+
+Le dictionnaire du correcteur (`correcteur/mots-fr-7.5.txt`) est tiré des
+« Dictionnaires orthographiques français » 7.5 (variante « Classique ») d'Olivier R.
+et des contributeurs de [Grammalecte](https://grammalecte.net/) (Dicollecte). Il
+reste sous sa propre licence, la **Mozilla Public License 2.0** : texte complet et
+provenance dans `correcteur/LICENCE-dictionnaire.txt`.
 
 ---
 *Réalisé par Ferrus Dantioch*

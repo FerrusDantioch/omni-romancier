@@ -524,7 +524,32 @@ body.mode-ecriture main{ flex:1; min-height:0; }
 }
 .calque mark.lieu{ text-decoration-style:dashed; }  /* les lieux : soulignés en pointillés */
 .calque mark.vide{ display:none; }                   /* un nom vidé, gardé pour resservir (il ne doit pas compter) */
-body.concentration .calque, body.concentration .bulle-noms{ display:none; }
+/* Fautes d'orthographe (js/orthographe.js) : une fine vague d'un rouge adouci, sans fond */
+.calque mark.faute{
+  background:none; border-radius:0;
+  text-decoration:underline wavy 1.5px var(--faute);
+  text-underline-offset:.2em;
+}
+/* Mode concentration : les noms ne sont plus colorés, les fautes restent soulignées */
+body.concentration .calque mark:not(.faute){ background:none; text-decoration:none; }
+body.concentration .bulle-noms{ display:none; }
+
+/* Le correcteur (bulle de corrections, dictionnaire personnel : correcteur/correcteur.css), aux couleurs de l'application */
+:root{
+  --correcteur-fond:var(--table-haute);
+  --correcteur-texte:var(--texte);
+  --correcteur-discret:var(--discret);
+  --correcteur-trait:var(--trait);
+  --correcteur-accent:var(--univers);
+  --correcteur-survol:var(--trait);
+  --correcteur-ombre:var(--ombre);
+  --correcteur-souligne:var(--faute);
+  --correcteur-police:var(--f-titre);
+  --correcteur-rayon:var(--arrondi-petit);
+}
+.correcteur-bulle .correcteur-suggestion{ font-family:var(--f-texte); }
+.correcteur-dictionnaire input{ font:inherit; }
+.correcteur-dictionnaire .correcteur-intro, .correcteur-dictionnaire .correcteur-compte{ font-size:.85rem; color:var(--discret); }
 
 /* La bulle qui apparaît quand on touche un nom coloré */
 .bulle-noms{
