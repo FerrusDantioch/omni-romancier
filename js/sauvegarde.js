@@ -267,10 +267,11 @@ export async function mettreAJourEtat() {
       el("li", {}, protege
         ? "Le navigateur s'est engagé à ne pas effacer ces données."
         : "Le navigateur pourrait effacer ces données s'il manque de place : exportez régulièrement."),
-      dernierImport ? el("li", {}, dernierImport.nature === "annulation"
+      // (sans import, aucune ligne : « null » s'afficherait sinon tel quel dans la liste)
+      ...(dernierImport ? [el("li", {}, dernierImport.nature === "annulation"
         ? `Dernier import annulé le ${dateHeure(dernierImport.quand)} (on peut revenir sur cette annulation).`
         : `Dernier import : ${dateHeure(dernierImport.quand)}`
-          + (dernierImport.nature === "fusion" ? " (fusion)" : " (remplacement)") + ", annulable.") : null,
+          + (dernierImport.nature === "fusion" ? " (fusion)" : " (remplacement)") + ", annulable.")] : []),
     );
   }
 
