@@ -50,6 +50,7 @@
   --sur-accent:#140d24;  /* texte posé sur un bouton violet */
   --danger:#e0705f;      /* actions dangereuses (supprimer) */
   --trouvaille:#ffd666;  /* passages trouvés par « Rechercher » (surlignés dans le texte) */
+  --faute:#d98a93;       /* fautes d'orthographe : vague d'un rouge adouci (voir js/orthographe.js) */
 
   /* Couleurs des univers — identiques au portfolio */
   --cyber:#ff4fa3;       /* Cyberpunk : rose */
