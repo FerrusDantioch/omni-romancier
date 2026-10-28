@@ -16,6 +16,7 @@
 // =====================================================================
 
 import { el, nombre, pluriel, ecrireTexte, STYLES_DU_TEXTE, placeDuTexte } from "./outils.js";
+import { masquerSauts } from "../commun/saut-de-page.js";
 import { confirmer, informer } from "./dialogues.js";
 import { etat, ecouter, scenesDansLOrdre, trouverChapitre } from "./etat.js";
 import {
@@ -251,9 +252,12 @@ function preparerMotif(q) {
 const entier = (t, debut, fin) => !(debut > 0 && LETTRE.test(t[debut - 1])) && !(fin < t.length && LETTRE.test(t[fin]));
 
 // Les passages trouvés dans un texte : [[debut, fin], …]
-function passages(texte) {
+function passages(source) {
   const trouves = [];
-  if (!texte || !motif) return trouves;
+  if (!source || !motif) return trouves;
+  // On cherche dans le texte où les sauts de page sont masqués (mêmes positions) :
+  // « Remplacer » ne peut jamais abîmer un saut de page.
+  const texte = masquerSauts(source);
   motif.lastIndex = 0;
   for (let r; (r = motif.exec(texte));) {
     const debut = r.index, fin = debut + r[0].length;

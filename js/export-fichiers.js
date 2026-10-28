@@ -27,6 +27,8 @@ function xml(texte) {
 }
 
 const estSeparateur = (bloc) => bloc.classList.contains("livre-separateur");
+// Un paragraphe qui suit un saut de page (voir blocsDuChapitre dans export-pdf.js)
+const nouvellePage = (bloc) => bloc.classList.contains("livre-nouvelle-page");
 
 // Le nom du fichier : le titre du roman (et ce qui est exporté), sans les caractères interdits
 export function nomDeFichier(livre, extension) {
@@ -76,6 +78,7 @@ const CSS_EPUB = `body { margin: 0 4%; line-height: 1.45; }
 p { margin: 0; text-indent: 1.5em; text-align: justify; hyphens: auto; -epub-hyphens: auto; -webkit-hyphens: auto; }
 p.premier { text-indent: 0; }
 p.separateur { text-indent: 0; text-align: center; margin: 1em 0; }
+p.nouvelle-page { text-indent: 0; page-break-before: always; break-before: page; }
 h1, h2 { font-weight: normal; text-align: center; hyphens: none; -epub-hyphens: none; }
 h2 { font-size: 1.5em; margin: 3em 0 2em; page-break-before: always; break-before: page; }
 .page-titre { text-align: center; padding-top: 25%; }
@@ -99,6 +102,7 @@ function chapitreEnXhtml(chapitre) {
   let suivant = "premier"; // le premier paragraphe d'un chapitre, et après un séparateur : sans retrait
   const paragraphes = chapitre.blocs.map((bloc) => {
     if (estSeparateur(bloc)) { suivant = "premier"; return `<p class="separateur">*&#160;&#160;*&#160;&#160;*</p>`; }
+    if (nouvellePage(bloc)) suivant = "nouvelle-page"; // saut de page : nouvelle page, sans retrait
     const classe = suivant ? ` class="${suivant}"` : "";
     suivant = "";
     return `<p${classe}>${enXhtml(bloc)}</p>`;
@@ -212,7 +216,9 @@ function enMorceaux(noeud, style = { i: false, b: false }) {
   return [...noeud.childNodes].map((n) => enMorceaux(n, suite)).join("");
 }
 
-const paragrapheWord = (style, contenu) => `<w:p><w:pPr><w:pStyle w:val="${style}"/></w:pPr>${contenu}</w:p>`;
+// (saut = true : le paragraphe commence une nouvelle page, comme après un saut de page)
+const paragrapheWord = (style, contenu, saut = false) =>
+  `<w:p><w:pPr><w:pStyle w:val="${style}"/>${saut ? "<w:pageBreakBefore/>" : ""}</w:pPr>${contenu}</w:p>`;
 const texteWord = (texte) => `<w:r><w:t xml:space="preserve">${xml(texte)}</w:t></w:r>`;
 
 function documentWord(livre) {
@@ -227,7 +233,8 @@ function documentWord(livre) {
     let premier = true; // le premier paragraphe, et celui qui suit un séparateur : sans retrait
     for (const bloc of chapitre.blocs) {
       if (estSeparateur(bloc)) { corps.push(paragrapheWord("Separateur", texteWord("* * *"))); premier = true; continue; }
-      corps.push(paragrapheWord(premier ? "CorpsPremier" : "Corps", enMorceaux(bloc)));
+      const saut = nouvellePage(bloc); // saut de page : nouvelle page, sans retrait
+      corps.push(paragrapheWord(premier || saut ? "CorpsPremier" : "Corps", enMorceaux(bloc), saut));
       premier = false;
     }
   }

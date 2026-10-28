@@ -26,7 +26,7 @@ import { initialiserSurlignage } from "./surlignage.js";
 import { initialiserFrise, montrerFrise, revenirDeLaFrise, oublierFrise, friseAffichee } from "./frise.js";
 
 // Numéro de version affiché dans « À propos »
-export const VERSION = "1.9.0";
+export const VERSION = "1.10.0"; // (à changer aussi dans sw.js)
 
 // Tous les fichiers de l'application se sont chargés ensemble (voir alerteDemarrage dans index.html)
 window.applicationChargee = true;

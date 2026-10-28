@@ -3,6 +3,7 @@
 // - deux modes : Notes (fragments, puces) et Rédigé (le texte du roman),
 //   ou les deux côte à côte sur un écran assez large
 // - mise en forme légère : *italique*, **gras**, séparateur * * *
+// - saut de page : une ligne « ──── Saut de page ──── » (voir commun/saut-de-page.js)
 // - sauvegarde automatique + copie de secours instantanée
 // - compteurs de mots, objectif de session, mode concentration
 //
@@ -20,6 +21,7 @@ import {
 import { afficherPlan, majComptes, marquerActive, ajouterChapitre, ajouterScene } from "./plan.js";
 import { oublierHistorique } from "./annulation.js";
 import { passagesDeLaScene } from "./reperage.js";
+import { SAUT_DE_PAGE, corrigerSaisie, reparerSauts, difference } from "../commun/saut-de-page.js";
 
 // Les deux zones de texte : une par mode (chacune garde son curseur ; pour Ctrl+Z, voir annulation.js)
 const zones = {};
@@ -52,6 +54,7 @@ let modeAuClavier = null;  // le texte où l'on écrit (Notes ou Rédigé) ; nul
 const defilements = new Map(); // zone cachée → son défilement, rendu quand elle réapparaît
 let selectionsPosees = 0;  // compteur des passages montrés (voir placerPassage)
 let ouvertures = 0;        // compteur des scènes demandées (voir ouvrirScene)
+let correctionEnCours = false; // une protection du saut de page modifie le texte (voir protegerSautDePage)
 
 const $ = (id) => document.getElementById(id);
 
@@ -64,10 +67,14 @@ export function initialiserEditeur() {
   zones.redige = $("texte-redige");
 
   for (const [mode, zone] of Object.entries(zones)) {
-    zone.addEventListener("input", () => {
+    // Le saut de page ne peut pas être abîmé : effacé d'un coup, jamais coupé (voir protegerSautDePage)
+    zone.addEventListener("beforeinput", (e) => protegerSautDePage(e, zone));
+    zone.addEventListener("compositionend", () => reparerSautsDe(zone));
+    zone.addEventListener("input", (e) => {
       if (!scene) return;
       aRelire.add(mode);   // le texte sera relu plus tard (relire un long texte à chaque touche ralentirait)
       marquerModifiee();
+      if (!e.isComposing) reparerSautsDe(zone);
     });
     zone.addEventListener("keydown", (e) => raccourcisDansLeTexte(e, mode));
     zone.addEventListener("focus", () => surFocus(mode));
@@ -512,6 +519,61 @@ function insererSeparateur(zone) {
   inserer(zone, prefixe + "* * *\n\n");
 }
 
+// Insère un saut de page au curseur, sur sa propre ligne ; le curseur va à la ligne d'après,
+// prêt à écrire la suite (qui commencera sur une nouvelle page dans le PDF, l'ePub et le Word)
+function insererSautDePage(zone) {
+  const avant = zone.value.slice(0, zone.selectionStart);
+  const prefixe = avant === "" || avant.endsWith("\n") ? "" : "\n";
+  inserer(zone, prefixe + SAUT_DE_PAGE + "\n");
+}
+
+// Protège les sauts de page pendant l'écriture (règles dans commun/saut-de-page.js) :
+// un retour arrière (ou Suppr) qui touche un saut de page l'efface en entier, d'un coup ;
+// le texte tapé sur sa ligne va sur la ligne d'à côté. Ctrl+Z le fait revenir.
+function protegerSautDePage(e, zone) {
+  if (correctionEnCours || e.isComposing || !e.cancelable) return;
+  const type = e.inputType;
+  let action = "inserer", donnee = "";
+  if (type.startsWith("delete") && type.endsWith("Backward")) action = "arriere";
+  else if (type.startsWith("delete") && type.endsWith("Forward")) action = "avant";
+  else if (type === "insertLineBreak" || type === "insertParagraph") donnee = "\n";
+  else if (type === "insertText" || type === "insertReplacementText" || type === "insertFromPaste" || type === "insertFromDrop") {
+    donnee = e.data ?? e.dataTransfer?.getData("text/plain") ?? "";
+  } else return;
+  const correction = corrigerSaisie(zone.value, zone.selectionStart, zone.selectionEnd, action, donnee);
+  if (!correction) return; // aucun saut de page touché : le navigateur fait la modification lui-même
+  e.preventDefault();
+  remplacerDans(zone, correction);
+  zone.setSelectionRange(correction.curseur, correction.curseur);
+}
+
+// Solution de secours : un clavier de téléphone a pu abîmer un saut de page sans prévenir
+// (pendant la « composition » d'un mot). On le remet d'aplomb après coup.
+function reparerSautsDe(zone) {
+  if (correctionEnCours || !zone.value.includes("─")) return;
+  const nouveau = reparerSauts(zone.value);
+  if (nouveau === null) return;
+  const changement = difference(zone.value, nouveau);
+  // Le curseur garde sa place dans le texte (décalée si le changement est avant lui)
+  const curseur = zone.selectionEnd;
+  const ecart = changement.remplacement.length - (changement.fin - changement.debut);
+  const apres = curseur >= changement.fin ? curseur + ecart
+    : curseur > changement.debut ? changement.debut + changement.remplacement.length : curseur;
+  remplacerDans(zone, changement);
+  zone.setSelectionRange(apres, apres);
+}
+
+// Remplace un passage du texte en gardant l'historique « Ctrl+Z » (sans relancer la protection)
+function remplacerDans(zone, { debut, fin, remplacement }) {
+  correctionEnCours = true;
+  try {
+    zone.setSelectionRange(debut, fin);
+    inserer(zone, remplacement);
+  } finally {
+    correctionEnCours = false;
+  }
+}
+
 // Ajoute (ou retire) une puce « - » au début de la ligne du curseur
 function basculerPuce(zone) {
   const curseur = zone.selectionStart;
@@ -534,6 +596,7 @@ function formater(type) {
   if (type === "italique") entourer(zone, "*");
   else if (type === "gras") entourer(zone, "**");
   else if (type === "separateur") insererSeparateur(zone);
+  else if (type === "saut-de-page") insererSautDePage(zone);
   else if (type === "puce") basculerPuce(zone);
 }
 
@@ -545,6 +608,8 @@ function raccourcisDansLeTexte(e, mode) {
     const touche = e.key.toLowerCase();
     if (touche === "i") { e.preventDefault(); entourer(zone, "*"); return; }
     if (touche === "b") { e.preventDefault(); entourer(zone, "**"); return; }
+    // Ctrl+Entrée : saut de page (le même raccourci que dans Omni-Texte, Word et LibreOffice)
+    if (e.key === "Enter" && !e.isComposing) { e.preventDefault(); insererSautDePage(zone); return; }
   }
   // Mode Notes : « Entrée » sur une ligne à puce crée une nouvelle puce
   if (mode === "notes" && e.key === "Enter" && !ctrl && !e.shiftKey && !e.altKey && !e.isComposing

@@ -2,6 +2,8 @@
 // PETITS OUTILS PARTAGÉS par toutes les parties de l'application
 // =====================================================================
 
+import { masquerSauts } from "../commun/saut-de-page.js";
+
 // Les univers de l'Omni-système (la clé sert dans le code et dans theme.css)
 export const UNIVERS = {
   cyber:   { nom: "Cyberpunk" },
@@ -50,10 +52,10 @@ export function ecrireTexte(element, texte) {
   else element.textContent = texte;
 }
 
-// Compte les mots d'un texte (les symboles de mise en forme * ne comptent pas)
+// Compte les mots d'un texte (les symboles de mise en forme * et les sauts de page ne comptent pas)
 export function compterMots(texte) {
   if (typeof texte !== "string" || !texte) return 0; // rien (ou pas du texte) : 0 mot
-  const mots = texte
+  const mots = masquerSauts(texte)
     .replace(/\*/g, "")    // retire les * de *italique* et **gras** (« * * * » = 0 mot)
     // Un mot = lettres, chiffres et accents, éventuellement reliés par une apostrophe ou un trait
     // d'union (« aujourd'hui », « peut-être » = 1 mot), ou un nombre écrit « 12,5 » ou « 10 000 »
