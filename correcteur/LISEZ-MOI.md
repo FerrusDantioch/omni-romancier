@@ -5,8 +5,8 @@ modifie **seulement dans omni-texte**, puis on le recopie dans
 omni-romancier :
 
 ```
-node outils/copier-correcteur.mjs              (depuis le dossier omni-texte)
-node outils/copier-correcteur.mjs --verifier   (vérifie que les deux sont identiques)
+node outils/copier-commun.mjs              (depuis le dossier omni-texte)
+node outils/copier-commun.mjs --verifier   (vérifie que les deux sont identiques)
 ```
 
 Les tests d'Omni-Texte vérifient aussi que les deux exemplaires sont identiques,

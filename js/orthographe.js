@@ -12,6 +12,7 @@
 // en mémoire : pendant l'écriture, seules les lignes nouvelles ou modifiées sont revérifiées.
 // =====================================================================
 
+import { estSautDePage } from "../commun/saut-de-page.js";
 import { creerCorrecteur } from "../correcteur/correcteur.js";
 import { ouvrirBulle, fermerBulle, replacerBulle } from "../correcteur/bulle.js";
 import { afficherDictionnaire } from "../correcteur/liste.js";
@@ -86,7 +87,8 @@ function majCorrecteurNatif() {
  * sera vérifiée à la prochaine pause.
  */
 export function fautesDeLigne(texte) {
-  if (!correcteur.actif || !LETTRE.test(texte)) return [];
+  // (un saut de page « ──── Saut de page ──── » n'est jamais vérifié)
+  if (!correcteur.actif || !LETTRE.test(texte) || estSautDePage(texte)) return [];
   const fautes = connues.get(texte);
   if (fautes) return fautes;
   aVerifier.add(texte);

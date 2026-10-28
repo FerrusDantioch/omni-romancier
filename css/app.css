@@ -444,6 +444,13 @@ body.mode-ecriture main{ flex:1; min-height:0; }
 }
 .outils-format button.mono{ font:600 .8rem var(--f-des); }
 .outils-format button:hover{ border-color:var(--omni); }
+.outils-format button.avec-libelle{ font:600 .8rem var(--f-titre); white-space:nowrap; }
+#bouton-imprimer{ white-space:nowrap; }
+/* Au doigt : des boutons de mise en forme assez grands */
+@media (pointer:coarse){
+  .outils-format button{ min-width:40px; height:40px; }
+  #bouton-imprimer{ min-height:40px; }
+}
 .vue-ecriture[data-mode="redige"] .seulement-notes{ display:none; }
 /* Côte à côte : le bouton puce garde sa place (invisible) quand on écrit dans le texte rédigé,
    pour que la barre d'outils ne change pas de forme à chaque clic d'une colonne à l'autre */
@@ -529,6 +536,14 @@ body.mode-ecriture main{ flex:1; min-height:0; }
   background:none; border-radius:0;
   text-decoration:underline wavy 1.5px var(--faute);
   text-underline-offset:.2em;
+}
+/* Saut de page « ──── Saut de page ──── » (voir js/editeur.js) : sa ligne repose sur une bande
+   d'une teinte très douce, pour le distinguer du texte sans attirer l'œil.
+   (Ni nom ni faute n'y est jamais souligné.) */
+.calque-texte > div.saut-de-page{
+  border-radius:var(--arrondi-petit);
+  background:color-mix(in srgb, var(--discret) 12%, transparent);
+  box-shadow:inset 0 0 0 var(--filet) color-mix(in srgb, var(--discret) 18%, transparent);
 }
 /* Mode concentration : les noms ne sont plus colorés, les fautes restent soulignées */
 body.concentration .calque mark:not(.faute){ background:none; text-decoration:none; }

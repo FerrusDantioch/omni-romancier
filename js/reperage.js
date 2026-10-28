@@ -14,6 +14,7 @@
 // =====================================================================
 
 import { el, ecrireTexte } from "./outils.js";
+import { masquerSauts } from "../commun/saut-de-page.js";
 import { etat, ecouter } from "./etat.js";
 import { CATEGORIES, ouvrirFiche } from "./panneau.js";
 
@@ -227,7 +228,8 @@ export function nomsPossibles(texte, noms) {
 // et avec « coupes : true », qui sert à la liste des scènes d'une fiche.)
 export function nomsDansLeTexte(texte, noms, { coupes = false } = {}) {
   if (!texte) return [];
-  const { t, origine } = normaliser(texte);
+  // (les sauts de page sont masqués : un personnage nommé « Page » n'y est jamais repéré)
+  const { t, origine } = normaliser(masquerSauts(texte));
   const trouves = [];
   for (const n of nomsPossibles(t, noms)) {
     n.re.lastIndex = 0;

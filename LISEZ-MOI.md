@@ -4,7 +4,7 @@ Application d'écriture de romans tirés des parties de l'Omni-système.
 Elle s'installe comme une application, fonctionne **sans connexion**, et garde tout sur l'appareil
 (ordinateur ou téléphone).
 
-**Version 1.8** — les sept étapes prévues sont terminées, plus l'étape 8 (les fiches repérées dans le texte),
+**Version 1.10** — les sept étapes prévues sont terminées, plus l'étape 8 (les fiches repérées dans le texte),
 l'étape 9 (écrire sur deux appareils : la fusion), l'étape 10 (la frise des événements),
 l'étape 11 (les noms en couleur dans le texte), l'étape 12 (les notes à côté du texte rédigé),
 l'étape 13 (sur chaque fiche, les scènes où elle est nommée), l'étape 14 (l'export en ePub et en Word)
@@ -19,7 +19,7 @@ sans rien installer d'autre (voir « Omni-Romancier en ligne » plus bas).
   Horreur / enquête, Autre) dont la couleur habille l'interface.
 - **Écriture** en chapitres et scènes, chaque scène en deux versions : *Notes* (fragments, puces)
   et *Rédigé* (le texte du roman), ou **les deux côte à côte** sur un écran assez large.
-  Mise en forme `*italique*`, `**gras**`, séparateur `* * *`.
+  Mise en forme `*italique*`, `**gras**`, séparateur `* * *`, **saut de page**.
   Compteurs de mots, objectif de session, mode concentration.
 - **Fiches** à côté du texte : personnage principal (épinglé), PNJ, lieux, événements dans l'ordre.
 - **Frise des événements** : toute la partie sur une ligne du temps, et d'un coup d'œil, qui apparaît où.
@@ -177,6 +177,16 @@ Ouvrez un roman depuis la Bibliothèque. L'écran se divise en trois colonnes :
     qu'une seule liste d'annulations pour toute la page).
 - **Mise en forme** : `*italique*`, `**gras**`, et `* * *` (séparateur) sur sa propre ligne.
   Les boutons I, G et * * * insèrent ces symboles autour du texte sélectionné.
+- **Saut de page** : le bouton « Saut de page » (ou `Ctrl+Entrée`) insère au curseur, sur sa propre
+  ligne, le repère `──── Saut de page ────`, posé sur une bande d'une teinte douce. Dans le PDF, l'ePub
+  et le Word, ce qui le suit commence sur une nouvelle page, et le repère lui-même n'apparaît pas.
+  - Il ne peut pas être tapé par accident (ses traits `─` ne sont sur aucun clavier).
+  - Retour arrière juste après lui, ou `Suppr` juste avant, l'efface **en entier, d'un coup** ;
+    `Ctrl+Z` le fait revenir. Ce que l'on tape sur sa ligne va sur la ligne d'à côté.
+  - Il n'est jamais souligné par le correcteur, ne compte pas dans les mots, et la recherche
+    (`Ctrl+F`, « Remplacer ») ne le trouve jamais.
+  - Il est enregistré avec le texte, comme le reste.
+  - Le même repère existe dans Omni-Texte : un texte copié de l'un à l'autre garde ses sauts de page.
 - **Compteurs** : mots de la scène, du chapitre et du roman (seul le texte *Rédigé* compte).
 - **Session** : la barre suit les mots ajoutés depuis le début de la session.
   La session redémarre chaque jour, ou avec « Nouvelle session ». L'objectif se change
@@ -350,7 +360,9 @@ Choisissez **le roman entier**, **un chapitre** (dans la liste) ou **la scène o
 | **Word (.docx)** | le faire relire, l'annoter, le retravailler (Word, LibreOffice, Google Docs…) |
 
 Dans tous les cas : le **texte rédigé** seulement (jamais les notes ni les fiches), l'*italique* et le
-**gras** mis en forme, les `* * *` (un séparateur est aussi placé entre deux scènes), une page de titre
+**gras** mis en forme, les `* * *` (un séparateur est aussi placé entre deux scènes), les **sauts de page**
+(la suite commence sur une nouvelle page ; un saut au début ou à la fin d'un chapitre, ou plusieurs à la
+suite, ne créent jamais de page blanche ; un saut de page remplace un séparateur voisin), une page de titre
 si la case est cochée, et un seul nom, le pseudonyme **Ferrus Dantioch** (auteur du fichier, et
 « Réalisé par Ferrus Dantioch » sur la page de titre). Omni-Romancier retient le type de fichier, le format
 et la case « Page de titre » choisis la dernière fois.
@@ -375,7 +387,8 @@ et la case « Page de titre » choisis la dernière fois.
 
 ### PDF (mise en page de livre)
 
-1. Cochez **PDF** (c'est aussi ce qu'ouvre **`Ctrl+P`**), puis choisissez le **format**
+1. Cochez **PDF** (c'est aussi ce qu'ouvrent **`Ctrl+P`** et le bouton **« Imprimer / PDF »** de la barre
+   d'outils, au-dessus du texte), puis choisissez le **format**
    (*Livre (A5)*, le format d'un roman, ou *Page A4*) ; avec ou sans **page de titre**.
 2. Cliquez sur **« Préparer le PDF »** : la fenêtre d'impression du navigateur s'ouvre.
 3. Dans **« Destination »**, choisissez **« Enregistrer au format PDF »**, puis **« Enregistrer »**.
@@ -393,6 +406,7 @@ Utilisez **Chrome ou Edge** : Firefox n'imprime pas encore les numéros de page 
 |---|---|
 | `Ctrl+I` | italique `*…*` (une 2e fois : le retire) |
 | `Ctrl+B` | gras `**…**` |
+| `Ctrl+Entrée` | saut de page |
 | `Entrée` sur une ligne `- …` (mode Notes) | nouvelle puce ; sur une puce vide : fin de la liste |
 | `Ctrl+K` | recherche rapide d'une fiche (le curseur reste en place) |
 | `Ctrl+F` | rechercher dans tout le roman (`Entrée` : passage suivant ; `Maj+Entrée` : précédent) |
@@ -553,6 +567,7 @@ adresse. Les romans ne sont pas perdus (le nom de la base de données n'a pas ch
 index.html     la page de l'application
 manifest.json  la carte d'identité de l'application (nom, icônes, couleurs) pour l'installer
 sw.js          le « service worker » : la réserve qui permet de fonctionner sans connexion
+               (à chaque publication : changer VERSION dans sw.js ET dans js/app.js)
 serveur.py     petit serveur de secours (voir « Si quelque chose ne va pas »)
 .nojekyll      (fichier vide, caché) : GitHub Pages publie les fichiers tels quels
 css/theme.css  toutes les couleurs et polices
@@ -583,6 +598,7 @@ js/dialogues.js     les fenêtres de confirmation et les petits messages
 js/outils.js        petites fonctions partagées (compteur de mots, dates…)
 correcteur/    le correcteur d'orthographe, COMMUN avec Omni-Texte : ne pas le modifier ici
                (il se modifie dans le dépôt omni-texte, puis se recopie : voir correcteur/LISEZ-MOI.md)
+commun/        le saut de page en texte simple, COMMUN avec Omni-Texte : même règle (voir commun/LISEZ-MOI.md)
 fonts/         les polices (hors ligne)
 assets/        logos et icônes
 ```

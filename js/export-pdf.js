@@ -11,6 +11,7 @@
 // Le seul nom qui apparaît est celui de SIGNATURE (le pseudonyme, voir export-fichiers.js).
 // =====================================================================
 
+import { estSautDePage } from "../commun/saut-de-page.js";
 import { el } from "./outils.js";
 import * as db from "./db.js";
 import { etat, chapitresTries, scenesDe, trouverScene, trouverChapitre } from "./etat.js";
@@ -45,6 +46,9 @@ const pageDuRoman = () => !!etat.roman && (!$("vue-roman").hidden || !$("vue-fri
 
 export function initialiserExportPdf() {
   $("bouton-pdf").addEventListener("click", () => ouvrirExport());
+  // Bouton « Imprimer / PDF » de la barre d'outils : la même fenêtre, le PDF déjà choisi
+  // (on y choisit le roman, un chapitre ou la scène, puis le format)
+  $("bouton-imprimer").addEventListener("click", () => ouvrirExport({ type: "pdf" }));
 
   // Ctrl+P dans la page d'écriture (ou sur la frise) : notre export en PDF (au lieu d'imprimer l'écran tel quel)
   document.addEventListener("keydown", (e) => {
@@ -168,7 +172,8 @@ function exporterFichier(choix) {
 
 // Ce qu'on exporte (pour le PDF comme pour l'ePub et le Word) :
 // { titre, sousTitre, chapitres: [{ titre, blocs }], nom }, les blocs étant les paragraphes du livre
-// (<p>, avec <em> et <strong> ; un séparateur a la classe « livre-separateur »).
+// (<p>, avec <em> et <strong> ; un séparateur a la classe « livre-separateur », et un paragraphe
+// qui suit un saut de page, la classe « livre-nouvelle-page »).
 // Les titres sont mis en forme (espaces insécables…) ; « nom » est le titre tel quel (pour le nom du fichier).
 // Renvoie null (et le dit) s'il n'y a rien à exporter.
 export function contenuDuLivre({ portee, chapitreId }) {
@@ -297,6 +302,10 @@ function estSeparateur(ligne) {
 
 // Les paragraphes d'un chapitre. Entre deux scènes, un séparateur « * * * »
 // (sauf si le texte en a déjà un à cet endroit). Jamais de séparateur au début ou à la fin.
+// Un saut de page (ligne « ──── Saut de page ──── ») fait commencer le paragraphe suivant sur une
+// nouvelle page. Il remplace un séparateur voisin (la nouvelle page marque déjà le changement),
+// et il est ignoré au début ou à la fin d'un chapitre (un chapitre commence déjà sur une nouvelle
+// page) : jamais de page blanche. Plusieurs sauts à la suite n'en font qu'un.
 function blocsDuChapitre(scenes) {
   const lignes = [];
   for (const s of scenes) {
@@ -306,14 +315,15 @@ function blocsDuChapitre(scenes) {
     lignes.push(...texte.split("\n"));
   }
   const blocs = [];
-  let separateurEnAttente = false;
+  let separateurEnAttente = false, sautEnAttente = false;
   for (const brute of lignes) {
     const ligne = brute.trim();
     if (!ligne) continue; // les lignes vides ne servent qu'à aérer l'écriture
+    if (estSautDePage(ligne)) { sautEnAttente = blocs.length > 0; continue; }
     if (estSeparateur(ligne)) { separateurEnAttente = blocs.length > 0; continue; }
-    if (separateurEnAttente) blocs.push(el("p", { class: "livre-separateur", "aria-label": "Changement de scène" }, "*\u2003*\u2003*"));
-    separateurEnAttente = false;
-    blocs.push(el("p", {}, enLigne(typographie(ligne))));
+    if (separateurEnAttente && !sautEnAttente) blocs.push(el("p", { class: "livre-separateur", "aria-label": "Changement de scène" }, "*\u2003*\u2003*"));
+    blocs.push(el("p", sautEnAttente ? { class: "livre-nouvelle-page" } : {}, enLigne(typographie(ligne))));
+    separateurEnAttente = sautEnAttente = false;
   }
   return blocs;
 }

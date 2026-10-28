@@ -79,6 +79,10 @@
   #impression em{ font-style:italic; }
   #impression strong{ font-weight:700; }
 
+  /* Saut de page choisi par l'auteur : ce paragraphe commence une nouvelle page, sans alinéa
+     (le repère « ──── Saut de page ──── » lui-même n'est jamais imprimé : voir js/export-pdf.js) */
+  .livre-chapitre .livre-nouvelle-page{ break-before:page; text-indent:0; }
+
   /* Séparateur de scène « * * * » : centré, aéré, jamais seul en bas de page */
   .livre-chapitre .livre-separateur{
     text-indent:0; text-align:center;

@@ -24,6 +24,7 @@ import { el, STYLES_DU_TEXTE, placeDuTexte } from "./outils.js";
 import { etat, ecouter, trouverFiche } from "./etat.js";
 import { CATEGORIES, ouvrirFiche, basculerVolet } from "./panneau.js";
 import { estReperable, preparerNoms, nomsDansLeTexte, signatureDesNoms } from "./reperage.js";
+import { estSautDePage } from "../commun/saut-de-page.js";
 import { correcteur, fautesDeLigne, initialiserOrthographe, proposerCorrections, fermerBulle as fermerCorrections, replacerBulle } from "./orthographe.js";
 
 // Le choix « noms en couleur », propre à cet appareil (gardé dans le navigateur)
@@ -258,6 +259,10 @@ const signatureDesFautes = (fautes) => fautes.map((f) => f.debut + "-" + f.fin).
 // Une ligne est toujours faite ainsi : texte, marque, texte, marque, …, texte. On réutilise ce qui existe
 // (on change seulement les textes) ; une marque en trop devient vide, elle resservira plus tard.
 function remplirLigne(copie, ligne, texte, nomsTrouves, numero, fautes = fautesAffichees(copie, texte, numero, nomsTrouves)) {
+  // Un saut de page : une bande douce (voir app.css), jamais de nom ni de faute soulignés
+  const saut = estSautDePage(texte);
+  if (ligne.classList.contains("saut-de-page") !== saut) ligne.classList.toggle("saut-de-page", saut);
+  if (saut) { nomsTrouves = []; fautes = []; }
   // (gardés pour pouvoir réécrire seulement les fautes plus tard : voir majFautes)
   ligne.noms = nomsTrouves;
   ligne.fautes = signatureDesFautes(fautes);

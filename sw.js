@@ -17,6 +17,10 @@
 // Les romans, eux, ne sont jamais ici : ils sont dans la base IndexedDB.
 // =====================================================================
 
+// Version de l'application (la même que dans js/app.js, affichée dans « À propos »).
+// La changer à chaque publication : le navigateur voit alors un service worker modifié et
+// l'installe aussitôt, et la réserve est entièrement retéléchargée.
+const VERSION = "1.10.0";
 const RESERVE = "omni-romancier";
 const DELAI_RESEAU = 4000;   // au-delà (connexion très lente), on prend la copie en réserve
 const PAUSE_RESEAU = 15000;  // serveur injoignable : pendant ce temps, on ne le redemande plus
@@ -37,6 +41,7 @@ const FICHIERS = [
   "correcteur/liste.js",
   "correcteur/mots-fr-7.5.txt",
   "correcteur/LICENCE-dictionnaire.txt",
+  "commun/saut-de-page.js",
   "js/app.js",
   "js/annulation.js",
   "js/bibliotheque.js",
