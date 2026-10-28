@@ -126,9 +126,11 @@ Une fois l'application installée, **plus besoin du serveur** pour écrire.
 
 1. Retélécharger le ZIP (étape A) et lancer le serveur **depuis le nouveau dossier**, avec la même
    commande que d'habitude (étape B, ou `py serveur.py` si c'est elle qui marche chez vous), et le numéro `8000`.
-2. Ouvrir Omni-Romancier (son icône, ou http://localhost:8000) : il prend la nouvelle version tout seul,
-   et la met en réserve pour fonctionner ensuite sans connexion.
-3. Attendre la ligne **« Prête à fonctionner sans connexion ✓ »** dans « À propos », puis arrêter le serveur.
+2. Ouvrir Omni-Romancier (son icône, ou http://localhost:8000) : il télécharge la nouvelle version et la
+   met de côté. Un bandeau **« Une nouvelle version d'Omni-Romancier est prête »** apparaît en haut.
+3. Toucher **« Mettre à jour »** : la page se recharge avec la nouvelle version. Tant qu'on ne touche pas
+   ce bouton, rien ne change, même après avoir fermé et rouvert Omni-Romancier.
+4. Attendre la ligne **« Prête à fonctionner sans connexion ✓ »** dans « À propos », puis arrêter le serveur.
 
 Les romans ne sont pas dans le dossier mais dans le navigateur : une mise à jour n'y touche pas.
 *(Pour les habitués de git : `git clone https://github.com/FerrusDantioch/omni-romancier.git`, puis `git pull`.)*
@@ -539,8 +541,9 @@ trouverait une bibliothèque vide. L'adresse est signalée aux moteurs de recher
 - **ePub et Word** : le fichier va dans les **Téléchargements** du téléphone (une notification
   l'annonce) ; le toucher l'ouvre dans une application de lecture ou de traitement de texte.
 
-**Mises à jour** : chaque nouvelle version envoyée sur GitHub est prise automatiquement à la
-prochaine ouverture avec une connexion (quelques minutes après l'envoi).
+**Mises à jour** : chaque nouvelle version envoyée sur GitHub est téléchargée à la prochaine
+ouverture avec une connexion (quelques minutes après l'envoi), puis **mise de côté** : un bandeau
+propose « Mettre à jour », et elle ne remplace l'ancienne qu'après cet appui. Rien ne change par surprise.
 
 **À savoir** : chaque adresse a sa propre bibliothèque. Les romans écrits sur `localhost:8000`
 n'apparaissent pas à l'adresse en ligne, ni ceux du téléphone sur l'ordinateur. Pour passer de
@@ -592,7 +595,7 @@ js/zip.js           les archives ZIP (un ePub et un .docx en sont)
 js/fusion.js        la fusion des données de deux appareils
 js/annulation.js    Ctrl+Z en toute sécurité (n'annule que là où l'on écrit)
 js/onglets.js       une seule page d'Omni-Romancier ouverte à la fois
-js/hors-ligne.js    le mode hors ligne et le bouton « Installer l'application »
+js/hors-ligne.js    le mode hors ligne, les boutons « Installer l'application » et « Mettre à jour »
 js/sauvegarde.js    les boutons d'export/import (fusion, annulation) et le rappel
 js/dialogues.js     les fenêtres de confirmation et les petits messages
 js/outils.js        petites fonctions partagées (compteur de mots, dates…)
