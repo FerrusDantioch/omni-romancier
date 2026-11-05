@@ -4,11 +4,12 @@ Application d'écriture de romans tirés des parties de l'Omni-système.
 Elle s'installe comme une application, fonctionne **sans connexion**, et garde tout sur l'appareil
 (ordinateur ou téléphone).
 
-**Version 1.10** — les sept étapes prévues sont terminées, plus l'étape 8 (les fiches repérées dans le texte),
+**Version 1.12** — les sept étapes prévues sont terminées, plus l'étape 8 (les fiches repérées dans le texte),
 l'étape 9 (écrire sur deux appareils : la fusion), l'étape 10 (la frise des événements),
 l'étape 11 (les noms en couleur dans le texte), l'étape 12 (les notes à côté du texte rédigé),
 l'étape 13 (sur chaque fiche, les scènes où elle est nommée), l'étape 14 (l'export en ePub et en Word)
-et l'étape 15 (rechercher et remplacer dans tout le roman).
+l'étape 15 (rechercher et remplacer dans tout le roman) et l'étape 16 (les notes et les fiches dans
+l'export, et deux personnages principaux épinglés côte à côte).
 
 **En ligne : https://ferrusdantioch.github.io/omni-romancier/** — s'ouvre aussi sur téléphone,
 sans rien installer d'autre (voir « Omni-Romancier en ligne » plus bas).
@@ -21,7 +22,7 @@ sans rien installer d'autre (voir « Omni-Romancier en ligne » plus bas).
   et *Rédigé* (le texte du roman), ou **les deux côte à côte** sur un écran assez large.
   Mise en forme `*italique*`, `**gras**`, séparateur `* * *`, **saut de page**.
   Compteurs de mots, objectif de session, mode concentration.
-- **Fiches** à côté du texte : personnage principal (épinglé), PNJ, lieux, événements dans l'ordre.
+- **Fiches** à côté du texte : un ou deux personnages principaux (épinglés), PNJ, lieux, événements dans l'ordre.
 - **Frise des événements** : toute la partie sur une ligne du temps, et d'un coup d'œil, qui apparaît où.
 - **`Ctrl+K`** : on tape un nom, la fiche s'ouvre à côté, **le curseur ne bouge pas**.
 - **Dans cette scène** : les personnages et lieux nommés dans la scène s'affichent d'eux-mêmes
@@ -34,7 +35,8 @@ sans rien installer d'autre (voir « Omni-Romancier en ligne » plus bas).
 - **Rechercher et remplacer** (`Ctrl+F`) : un mot cherché dans tout le roman, chaque passage listé
   et surligné ; le remplacer un par un ou partout d'un coup (renommer un personnage…), et l'annuler.
 - **Export** d'une scène, d'un chapitre ou du roman : en **PDF** mis en page comme un livre,
-  en **ePub** pour une liseuse, ou en **Word** pour faire relire.
+  en **ePub** pour une liseuse, ou en **Word** pour faire relire ; avec, si on le veut, les **notes**
+  des scènes et les **fiches** à la fin.
 - **Sauvegarde automatique** permanente, copie de secours si l'onglet se ferme en pleine phrase,
   et **export / import** de toutes les données dans un fichier, avec un rappel doux.
 - **Deux appareils** (téléphone et ordinateur) : le fichier exporté sur l'un se **fusionne** sur l'autre,
@@ -212,7 +214,7 @@ Ouvrez un roman depuis la Bibliothèque. L'écran se divise en trois colonnes :
 
 ## Consulter et modifier les fiches (colonne de droite)
 
-- **4 onglets** : Principal (personnage principal), PNJ, Lieux, Événements.
+- **4 onglets** : Principal (un ou deux personnages principaux), PNJ, Lieux, Événements.
   « + Nouveau… » crée une fiche ; « ✎ Modifier » ouvre le formulaire ; tout s'enregistre seul ;
   « Terminé » revient à la lecture.
 - **Champs** : personnages → autres noms, apparence, caractère, background, relations ;
@@ -259,9 +261,11 @@ Ouvrez un roman depuis la Bibliothèque. L'écran se divise en trois colonnes :
     mettre un instant à venir : « Recherche dans le roman… ». Le roman est lu en arrière-plan,
     sans jamais bloquer l'écriture.
   - Pas de liste pour la fiche épinglée (gardée courte), ni pour les événements (ils ont leurs « Concernés »).
-- **Fiche épinglée** : elle reste affichée en haut du panneau, quel que soit l'onglet.
-  Le premier personnage principal s'épingle tout seul ; « 📌 Épingler » en choisit une autre ;
-  « Replier » la réduit à son nom.
+- **Fiches épinglées** (deux au plus) : elles restent affichées en haut du panneau, quel que soit l'onglet.
+  Les deux premiers personnages principaux s'épinglent tout seuls : pour un **deuxième personnage principal**,
+  onglet « Principal », puis « + Nouveau personnage principal ». « 📌 Épingler » épingle une autre fiche
+  (s'il y en a déjà deux, la plus ancienne laisse sa place) ; « Désépingler » la retire ;
+  « Replier » réduit une fiche épinglée à son nom.
 - **Événements** : listés dans l'ordre, avec le moment et le début du résumé. ↑ ↓ pour les réordonner.
   Les personnages et lieux cochés deviennent des étiquettes cliquables ; chaque fiche indique
   en retour « Apparaît dans » ses événements, et « Suivre sur la frise » (voir ci-dessous).
@@ -361,13 +365,25 @@ Choisissez **le roman entier**, **un chapitre** (dans la liste) ou **la scène o
 | **ePub** | lire le roman sur une liseuse (Kobo, Kindle…) ou dans une application de lecture du téléphone |
 | **Word (.docx)** | le faire relire, l'annoter, le retravailler (Word, LibreOffice, Google Docs…) |
 
-Dans tous les cas : le **texte rédigé** seulement (jamais les notes ni les fiches), l'*italique* et le
+Dans tous les cas : le **texte rédigé**, l'*italique* et le
 **gras** mis en forme, les `* * *` (un séparateur est aussi placé entre deux scènes), les **sauts de page**
 (la suite commence sur une nouvelle page ; un saut au début ou à la fin d'un chapitre, ou plusieurs à la
 suite, ne créent jamais de page blanche ; un saut de page remplace un séparateur voisin), une page de titre
 si la case est cochée, et un seul nom, le pseudonyme **Ferrus Dantioch** (auteur du fichier, et
 « Réalisé par Ferrus Dantioch » sur la page de titre). Omni-Romancier retient le type de fichier, le format
-et la case « Page de titre » choisis la dernière fois.
+et les cases cochées la dernière fois.
+
+**Ajouter à la fin du livre** (deux cases, décochées au départ) :
+
+- **Les notes des scènes** : une partie « Notes des scènes », chapitre par chapitre puis scène par scène
+  (seulement les scènes exportées qui ont des notes). Les puces `-` deviennent de vraies puces.
+- **Les fiches** : une partie « Fiches » avec toutes les fiches du roman, rangées en personnages
+  principaux, PNJ, lieux et événements (dans l'ordre de la chronologie) : nom, type, chaque champ rempli,
+  personnages et lieux concernés (pour un événement) et notes libres.
+
+Ces parties commencent chacune sur une nouvelle page et figurent dans le sommaire de l'ePub
+(et dans le volet de navigation de Word). Elles sont mises en page comme des notes de travail :
+texte aligné à gauche, sans alinéa.
 
 ### ePub et Word
 

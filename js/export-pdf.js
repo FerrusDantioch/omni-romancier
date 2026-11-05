@@ -7,16 +7,18 @@
 // aucune dépendance, et cela fonctionne hors ligne. Le livre est construit dans
 // un bloc invisible à l'écran (#impression) ; la mise en page est dans css/impression.css.
 //
-// Ce qui est exporté : uniquement le texte RÉDIGÉ (ni les notes, ni les fiches).
+// Ce qui est exporté : le texte RÉDIGÉ ; et, si on le demande (cases de la fenêtre « Exporter »),
+// à la fin du livre, les NOTES des scènes et les FICHES (personnages, PNJ, lieux, événements).
 // Le seul nom qui apparaît est celui de SIGNATURE (le pseudonyme, voir export-fichiers.js).
 // =====================================================================
 
 import { estSautDePage } from "../commun/saut-de-page.js";
 import { el } from "./outils.js";
 import * as db from "./db.js";
-import { etat, chapitresTries, scenesDe, trouverScene, trouverChapitre } from "./etat.js";
+import { etat, chapitresTries, scenesDe, trouverScene, trouverChapitre, fichesDe, trouverFiche } from "./etat.js";
 import { ouvrirDialogue, informer } from "./dialogues.js";
 import { relireMaintenant, revenirAuTexte } from "./editeur.js";
+import { CATEGORIES, sauverFiche } from "./panneau.js";
 import { SIGNATURE, creerEpub, creerDocx, telecharger } from "./export-fichiers.js";
 
 // Les types de fichier proposés
@@ -133,7 +135,16 @@ async function choisirEtExporter(typeVoulu) {
       el("label", { class: "option-export" },
         el("input", { type: "checkbox", name: "pageDeTitre", checked: memo.pageDeTitre !== false }),
         el("span", {}, "Page de titre")),
-      el("p", { class: "discret petit" }, "Seul le texte rédigé est exporté (ni les notes, ni les fiches).", conseilPdf),
+      el("fieldset", { class: "groupe-export" },
+        el("legend", { class: "etiquette" }, "Ajouter à la fin du livre"),
+        el("label", { class: "option-export" },
+          el("input", { type: "checkbox", name: "notes", checked: !!memo.notes }),
+          el("span", {}, "Les notes des scènes")),
+        el("label", { class: "option-export" },
+          el("input", { type: "checkbox", name: "fiches", checked: !!memo.fiches }),
+          el("span", {}, "Les fiches", el("span", { class: "discret" }, " — personnages, PNJ, lieux, événements"))),
+      ),
+      el("p", { class: "discret petit" }, "Le texte rédigé est toujours exporté ; les notes et les fiches seulement si leur case est cochée.", conseilPdf),
     ],
     ok: TYPES[typeChoisi].ok,
     lireFormulaire: (form) => ({
@@ -142,10 +153,15 @@ async function choisirEtExporter(typeVoulu) {
       chapitreId: form.elements.chapitre.value,
       format: form.elements.format.value,
       pageDeTitre: form.elements.pageDeTitre.checked,
+      notes: form.elements.notes.checked,
+      fiches: form.elements.fiches.checked,
     }),
   });
   if (!choix) return;
-  db.ecrireReglage("export-pdf", { type: choix.type, format: choix.format, pageDeTitre: choix.pageDeTitre }).catch(() => {});
+  await sauverFiche(); // (une fiche en cours de modification : ses tout derniers changements comptent)
+  db.ecrireReglage("export-pdf", {
+    type: choix.type, format: choix.format, pageDeTitre: choix.pageDeTitre, notes: choix.notes, fiches: choix.fiches,
+  }).catch(() => {});
   if (choix.type !== "pdf") { exporterFichier(choix); return; }
   if (!preparer(choix)) return;
   await imprimer();
@@ -171,12 +187,14 @@ function exporterFichier(choix) {
 // =====================================================================
 
 // Ce qu'on exporte (pour le PDF comme pour l'ePub et le Word) :
-// { titre, sousTitre, chapitres: [{ titre, blocs }], nom }, les blocs étant les paragraphes du livre
+// { titre, sousTitre, chapitres: [{ titre, blocs, annexe }], nom }, les blocs étant les paragraphes du livre
 // (<p>, avec <em> et <strong> ; un séparateur a la classe « livre-separateur », et un paragraphe
 // qui suit un saut de page, la classe « livre-nouvelle-page »).
+// À la fin, les « annexes » (annexe: true) : les notes des scènes et les fiches, si on les demande
+// (notes, fiches : true). Leurs blocs sont décrits plus bas (voir annexeDesNotes).
 // Les titres sont mis en forme (espaces insécables…) ; « nom » est le titre tel quel (pour le nom du fichier).
 // Renvoie null (et le dit) s'il n'y a rien à exporter.
-export function contenuDuLivre({ portee, chapitreId }) {
+export function contenuDuLivre({ portee, chapitreId, notes = false, fiches = false }) {
   relireMaintenant();
 
   // 1. Des chapitres, chacun avec ses scènes
@@ -199,29 +217,114 @@ export function contenuDuLivre({ portee, chapitreId }) {
   // 2. Chaque chapitre devient une suite de paragraphes ; les scènes vides sont ignorées
   const chapitres = parties
     .map(({ chapitre, scenes }) => ({ chapitre, blocs: blocsDuChapitre(scenes) }))
-    .filter((c) => c.blocs.length);
-  if (!chapitres.length) {
-    informer("Rien à exporter : le texte rédigé est vide (les notes ne sont jamais exportées).");
+    .filter((c) => c.blocs.length)
+    .map(({ chapitre, blocs }) => ({ titre: typographie(chapitre.titre || "Sans titre"), blocs, annexe: false }));
+
+  // 3. À la fin, les annexes demandées (seulement si elles ont du contenu)
+  const annexes = [
+    notes ? annexeDesNotes(parties) : null,
+    fiches ? annexeDesFiches() : null,
+  ].filter((a) => a && a.blocs.length);
+
+  if (!chapitres.length && !annexes.length) {
+    informer(notes || fiches
+      ? "Rien à exporter : le texte rédigé est vide, et il n'y a ni notes ni fiches à ajouter."
+      : "Rien à exporter : le texte rédigé est vide. (Pour exporter les notes, cochez « Les notes des scènes ».)");
     return null;
   }
   return {
     titre: typographie(etat.roman.titre || "Sans titre"),
     sousTitre: sousTitre ? typographie(sousTitre) : null,
-    chapitres: chapitres.map(({ chapitre, blocs }) => ({ titre: typographie(chapitre.titre || "Sans titre"), blocs })),
+    chapitres: [...chapitres, ...annexes],
     nom: etat.roman.titre + (sousTitre ? " — " + sousTitre : ""),
   };
 }
 
+// =====================================================================
+// Les annexes : notes des scènes et fiches
+// Leurs blocs (des éléments de la page, comme ceux du livre) :
+//   <h3 class="livre-annexe-titre">       un titre (un chapitre ; une catégorie de fiches)
+//   <h4 class="livre-annexe-sous-titre">  un sous-titre (une scène ; une fiche)
+//   <p class="livre-annexe-libelle">      le nom d'un champ de fiche (« Apparence »…)
+//   <p class="livre-annexe-texte">        une ligne de texte (avec, en plus, « livre-annexe-puce » pour une puce)
+//   <p class="livre-separateur">          un séparateur « * * * »
+// =====================================================================
+
+// Les notes des scènes exportées, chapitre par chapitre (les scènes sans notes sont ignorées)
+function annexeDesNotes(parties) {
+  const blocs = [];
+  for (const { chapitre, scenes } of parties) {
+    const avecNotes = scenes.filter((s) => (s.notes || "").trim());
+    if (!avecNotes.length) continue;
+    blocs.push(el("h3", { class: "livre-annexe-titre" }, typographie(chapitre.titre || "Sans titre")));
+    for (const s of avecNotes) {
+      blocs.push(el("h4", { class: "livre-annexe-sous-titre" }, typographie(s.titre || "Sans titre")));
+      blocs.push(...lignesDAnnexe(s.notes));
+    }
+  }
+  return { titre: "Notes des scènes", blocs, annexe: true };
+}
+
+// Les intitulés des catégories, au pluriel (dans l'ordre de l'export)
+const TITRES_FICHES = {
+  principal: "Personnages principaux", pnj: "PNJ", lieu: "Lieux", evenement: "Événements",
+};
+
+// Toutes les fiches du roman, catégorie par catégorie (les événements dans l'ordre de la chronologie)
+function annexeDesFiches() {
+  const blocs = [];
+  for (const [categorie, titre] of Object.entries(TITRES_FICHES)) {
+    const liste = fichesDe(categorie);
+    if (!liste.length) continue;
+    blocs.push(el("h3", { class: "livre-annexe-titre" }, titre));
+    for (const fiche of liste) blocs.push(...blocsDeLaFiche(fiche));
+  }
+  return { titre: "Fiches", blocs, annexe: true };
+}
+
+function blocsDeLaFiche(fiche) {
+  const blocs = [el("h4", { class: "livre-annexe-sous-titre" }, typographie(fiche.titre || "Sans nom"))];
+  if ((fiche.type || "").trim()) blocs.push(el("p", { class: "livre-annexe-texte" }, el("em", {}, typographie(fiche.type.trim()))));
+  const champ = (libelle, texte) => {
+    if (!(texte || "").trim()) return;
+    blocs.push(el("p", { class: "livre-annexe-libelle" }, libelle));
+    blocs.push(...lignesDAnnexe(texte));
+  };
+  for (const [cle, libelle] of CATEGORIES[fiche.categorie].champs) champ(libelle, fiche.champs?.[cle]);
+  if (fiche.categorie === "evenement") {
+    const noms = (ids) => (ids || []).map(trouverFiche).filter(Boolean).map((f) => f.titre || "Sans nom").join(", ");
+    champ("Personnages concernés", noms(fiche.champs?.personnages));
+    champ("Lieux concernés", noms(fiche.champs?.lieux));
+  }
+  champ("Notes", fiche.notes);
+  return blocs;
+}
+
+// Un texte libre (notes, champ de fiche) → une ligne de texte par paragraphe.
+// Les puces « - » ou « • » deviennent de vraies puces ; les lignes vides et les sauts de page sont ignorés.
+function lignesDAnnexe(texte) {
+  const blocs = [];
+  for (const brute of String(texte || "").split("\n")) {
+    const ligne = brute.trim();
+    if (!ligne || estSautDePage(ligne)) continue;
+    if (estSeparateur(ligne)) { blocs.push(el("p", { class: "livre-separateur" }, "*\u2003*\u2003*")); continue; }
+    const puce = ligne.match(/^[-•]\s+(.*)$/);
+    blocs.push(el("p", { class: "livre-annexe-texte" + (puce ? " livre-annexe-puce" : "") },
+      puce ? "•\u00A0" : null, enLigne(typographie(puce ? puce[1] : ligne))));
+  }
+  return blocs;
+}
+
 // Prépare le livre dans #impression. Renvoie false s'il n'y a rien à exporter.
-export function preparer({ portee, chapitreId, format = "A5", pageDeTitre = true }) {
-  const contenu = contenuDuLivre({ portee, chapitreId });
+export function preparer({ portee, chapitreId, format = "A5", pageDeTitre = true, notes = false, fiches = false }) {
+  const contenu = contenuDuLivre({ portee, chapitreId, notes, fiches });
   if (!contenu) return false;
   const f = FORMATS[format] || FORMATS.A5;
   const sousTitre = contenu.sousTitre;
 
   // Le livre
-  const livre = contenu.chapitres.map(({ titre, blocs }) =>
-    el("section", { class: "livre-chapitre" },
+  const livre = contenu.chapitres.map(({ titre, blocs, annexe }) =>
+    el("section", { class: "livre-chapitre" + (annexe ? " livre-annexe" : "") },
       el("h2", { class: "livre-titre-chapitre" }, titre),
       blocs));
   if (pageDeTitre) livre.unshift(pageTitre(sousTitre));

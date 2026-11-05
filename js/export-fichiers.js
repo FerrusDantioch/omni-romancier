@@ -2,7 +2,8 @@
 // EXPORT EN FICHIER : ePub (pour une liseuse) et Word (.docx, pour faire relire)
 //
 // Le contenu est le même que celui du PDF (voir export-pdf.js : contenuDuLivre) :
-// le texte rédigé seulement, l'italique, le gras, les séparateurs « * * * ».
+// le texte rédigé, l'italique, le gras, les séparateurs « * * * » ; et, à la fin, si on les demande,
+// les « annexes » : les notes des scènes et les fiches.
 // Les deux formats sont des archives ZIP de fichiers texte (XML), fabriquées ici
 // sans aucune dépendance (voir zip.js) : cela fonctionne hors ligne.
 // Le seul nom qui figure dans les fichiers (auteur, page de titre) est le pseudonyme.
@@ -29,6 +30,13 @@ function xml(texte) {
 const estSeparateur = (bloc) => bloc.classList.contains("livre-separateur");
 // Un paragraphe qui suit un saut de page (voir blocsDuChapitre dans export-pdf.js)
 const nouvellePage = (bloc) => bloc.classList.contains("livre-nouvelle-page");
+// Les blocs des annexes (voir annexeDesNotes dans export-pdf.js)
+const sorteDAnnexe = (bloc) =>
+  bloc.tagName === "H3" ? "titre"
+    : bloc.tagName === "H4" ? "sous-titre"
+      : bloc.classList.contains("livre-annexe-libelle") ? "libelle"
+        : estSeparateur(bloc) ? "separateur"
+          : bloc.classList.contains("livre-annexe-puce") ? "puce" : "texte";
 
 // Le nom du fichier : le titre du roman (et ce qui est exporté), sans les caractères interdits
 export function nomDeFichier(livre, extension) {
@@ -88,6 +96,12 @@ h2 { font-size: 1.5em; margin: 3em 0 2em; page-break-before: always; break-befor
 .page-titre .signature { text-indent: 0; text-align: center; font-size: .85em; font-style: italic; }
 nav ol { list-style: none; padding: 0; }
 nav li { margin: .4em 0; }
+.annexe h3 { font-size: 1.2em; font-weight: bold; text-align: left; margin: 1.6em 0 .5em; border-bottom: 1px solid currentColor; }
+.annexe h4 { font-size: 1em; font-weight: bold; text-align: left; margin: 1em 0 .3em; hyphens: none; -epub-hyphens: none; }
+.annexe p { text-indent: 0; text-align: left; margin: 0 0 .15em; }
+.annexe p.libelle { font-size: .8em; font-weight: bold; text-transform: uppercase; letter-spacing: .05em; margin: .5em 0 0; }
+.annexe p.puce { padding-left: 1em; text-indent: -1em; }
+.annexe p.separateur { text-align: center; margin: 1em 0; }
 `;
 
 // Un paragraphe du livre (texte, <em>, <strong>) → XHTML
@@ -98,7 +112,21 @@ function enXhtml(noeud) {
   return balise ? `<${balise}>${dedans}</${balise}>` : dedans;
 }
 
+// Une annexe (notes des scènes, fiches) : titres, noms de champs, lignes de texte, puces
+function annexeEnXhtml(annexe) {
+  const blocs = annexe.blocs.map((bloc) => {
+    const sorte = sorteDAnnexe(bloc);
+    if (sorte === "titre") return `<h3>${enXhtml(bloc)}</h3>`;
+    if (sorte === "sous-titre") return `<h4>${enXhtml(bloc)}</h4>`;
+    if (sorte === "separateur") return `<p class="separateur">*&#160;&#160;*&#160;&#160;*</p>`;
+    const classe = { libelle: ` class="libelle"`, puce: ` class="puce"` }[sorte] || "";
+    return `<p${classe}>${enXhtml(bloc)}</p>`;
+  });
+  return XHTML(annexe.titre, `<section class="annexe" epub:type="appendix">\n<h2>${xml(annexe.titre)}</h2>\n${blocs.join("\n")}\n</section>`);
+}
+
 function chapitreEnXhtml(chapitre) {
+  if (chapitre.annexe) return annexeEnXhtml(chapitre);
   let suivant = "premier"; // le premier paragraphe d'un chapitre, et après un séparateur : sans retrait
   const paragraphes = chapitre.blocs.map((bloc) => {
     if (estSeparateur(bloc)) { suivant = "premier"; return `<p class="separateur">*&#160;&#160;*&#160;&#160;*</p>`; }
@@ -230,6 +258,14 @@ function documentWord(livre) {
   }
   for (const chapitre of livre.chapitres) {
     corps.push(paragrapheWord("Heading1", texteWord(chapitre.titre))); // (chaque chapitre commence une nouvelle page)
+    if (chapitre.annexe) { // notes des scènes, fiches
+      const STYLES = { titre: "Heading2", "sous-titre": "Heading3", libelle: "Libelle", separateur: "Separateur", puce: "Puce", texte: "TexteAnnexe" };
+      for (const bloc of chapitre.blocs) {
+        const sorte = sorteDAnnexe(bloc);
+        corps.push(paragrapheWord(STYLES[sorte], sorte === "separateur" ? texteWord("* * *") : enMorceaux(bloc)));
+      }
+      continue;
+    }
     let premier = true; // le premier paragraphe, et celui qui suit un séparateur : sans retrait
     for (const bloc of chapitre.blocs) {
       if (estSeparateur(bloc)) { corps.push(paragrapheWord("Separateur", texteWord("* * *"))); premier = true; continue; }
@@ -262,6 +298,11 @@ const STYLES_WORD = `${ENTETE_XML}<w:styles ${W}>
 <w:style w:type="paragraph" w:styleId="CorpsPremier"><w:name w:val="Texte du roman (début)"/><w:basedOn w:val="Corps"/><w:next w:val="Corps"/><w:qFormat/><w:pPr><w:ind w:firstLine="0"/></w:pPr></w:style>
 <w:style w:type="paragraph" w:styleId="Separateur"><w:name w:val="Séparateur de scène"/><w:basedOn w:val="Normal"/><w:next w:val="CorpsPremier"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="240" w:after="240"/><w:jc w:val="center"/></w:pPr></w:style>
 <w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="CorpsPremier"/><w:qFormat/><w:pPr><w:keepNext/><w:pageBreakBefore/><w:spacing w:before="2400" w:after="720" w:line="240" w:lineRule="auto"/><w:jc w:val="center"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:sz w:val="36"/><w:szCs w:val="36"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Heading2"><w:name w:val="heading 2"/><w:basedOn w:val="Normal"/><w:next w:val="TexteAnnexe"/><w:qFormat/><w:pPr><w:keepNext/><w:pBdr><w:bottom w:val="single" w:sz="4" w:space="1" w:color="auto"/></w:pBdr><w:spacing w:before="480" w:after="120" w:line="240" w:lineRule="auto"/><w:outlineLvl w:val="1"/></w:pPr><w:rPr><w:b/><w:bCs/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Heading3"><w:name w:val="heading 3"/><w:basedOn w:val="Normal"/><w:next w:val="TexteAnnexe"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="240" w:after="60" w:line="240" w:lineRule="auto"/><w:outlineLvl w:val="2"/></w:pPr><w:rPr><w:b/><w:bCs/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Libelle"><w:name w:val="Nom d'un champ de fiche"/><w:basedOn w:val="Normal"/><w:next w:val="TexteAnnexe"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:before="120"/></w:pPr><w:rPr><w:b/><w:bCs/><w:caps/><w:spacing w:val="10"/><w:sz w:val="18"/><w:szCs w:val="18"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="TexteAnnexe"><w:name w:val="Texte des notes et des fiches"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="40"/></w:pPr><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:style>
+<w:style w:type="paragraph" w:styleId="Puce"><w:name w:val="Puce des notes"/><w:basedOn w:val="TexteAnnexe"/><w:qFormat/><w:pPr><w:ind w:left="284" w:hanging="284"/></w:pPr></w:style>
 <w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:before="4000" w:after="480" w:line="240" w:lineRule="auto"/><w:jc w:val="center"/></w:pPr><w:rPr><w:sz w:val="56"/><w:szCs w:val="56"/></w:rPr></w:style>
 <w:style w:type="paragraph" w:styleId="Subtitle"><w:name w:val="Subtitle"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="240"/><w:jc w:val="center"/></w:pPr><w:rPr><w:i/><w:iCs/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr></w:style>
 <w:style w:type="paragraph" w:styleId="SignatureLivre"><w:name w:val="Signature du livre"/><w:basedOn w:val="Normal"/><w:pPr><w:spacing w:before="960"/><w:jc w:val="center"/></w:pPr><w:rPr><w:i/><w:iCs/><w:sz w:val="20"/><w:szCs w:val="20"/></w:rPr></w:style>

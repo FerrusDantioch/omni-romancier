@@ -9,7 +9,7 @@
 // =====================================================================
 
 import { el } from "./outils.js";
-import { etat, trouverFiche } from "./etat.js";
+import { etat, trouverFiche, estEpinglee } from "./etat.js";
 import { CATEGORIES, ouvrirFiche, creerFiche, basculerVolet } from "./panneau.js";
 import { revenirAuTexte, quitterConcentration } from "./editeur.js";
 
@@ -218,7 +218,7 @@ function afficher(requete) {
       el("span", { class: "resultat-categorie" }, CATEGORIES[f.categorie].nom),
       el("span", { class: "resultat-titre" }, surligner(f.titre || "Sans nom", requete)),
       detail ? el("span", { class: "resultat-detail" }, detail) : null,
-      etat.roman.ficheEpinglee === f.id ? el("span", { class: "resultat-epingle", title: "Épinglée" }, "📌") : null,
+      estEpinglee(f.id) ? el("span", { class: "resultat-epingle", title: "Épinglée" }, "📌") : null,
     ));
   });
   marquerChoix();

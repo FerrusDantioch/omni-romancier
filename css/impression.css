@@ -89,4 +89,27 @@
     margin:.9em 0;
     break-after:avoid; break-inside:avoid;
   }
+
+  /* ---------- Annexes : notes des scènes et fiches (si elles sont demandées) ----------
+     Des notes de travail, pas du roman : texte aligné à gauche, sans alinéa, un peu plus petit */
+  #impression h3, #impression h4{ font-family:inherit; color:#000; letter-spacing:normal; text-transform:none; hyphens:none; }
+  .livre-annexe{ font-size:.94em; text-align:left; hyphens:manual; }
+  .livre-annexe .livre-annexe-titre{
+    margin:1.8em 0 .6em; font-size:1.2em; font-weight:600;
+    border-bottom:.5pt solid #000; padding-bottom:.15em;
+    break-after:avoid;
+  }
+  .livre-annexe .livre-titre-chapitre + .livre-annexe-titre{ margin-top:0; }
+  .livre-annexe .livre-annexe-sous-titre{
+    margin:1.1em 0 .3em; font-size:1em; font-weight:700;
+    break-after:avoid;
+  }
+  .livre-annexe p{ text-indent:0; }
+  .livre-annexe .livre-annexe-libelle{
+    margin:.5em 0 .05em; font-size:.82em; font-weight:700;
+    text-transform:uppercase; letter-spacing:.05em; color:#333;
+    break-after:avoid;
+  }
+  .livre-annexe .livre-annexe-texte{ margin:0 0 .15em; }
+  .livre-annexe .livre-annexe-puce{ padding-left:1em; text-indent:-1em; }
 }

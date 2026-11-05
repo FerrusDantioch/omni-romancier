@@ -356,7 +356,7 @@ export async function noterExport(maintenant) {
 //   textes  : champs facultatifs qui, s'ils sont là, doivent être du texte
 //   nombres : champs facultatifs qui, s'ils sont là, doivent être des nombres
 const REGLES = {
-  romans:    { ids: ["id"], textes: ["titre", "univers", "ficheEpinglee"], nombres: ["cree", "modifie", "objectifSession"] },
+  romans:    { ids: ["id"], textes: ["titre", "univers", "ficheEpinglee", "ficheEpinglee2"], nombres: ["cree", "modifie", "objectifSession"] },
   chapitres: { ids: ["id", "romanId"], textes: ["titre"], nombres: ["ordre"] },
   scenes:    { ids: ["id", "romanId", "chapitreId"], textes: ["titre", "notes", "texte", "mode"], nombres: ["ordre", "modifie"] },
   fiches:    { ids: ["id", "romanId", "categorie"], textes: ["titre", "type", "notes"], nombres: ["ordre", "modifie"] },
