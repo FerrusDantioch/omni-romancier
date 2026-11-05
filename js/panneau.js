@@ -1,8 +1,9 @@
 // =====================================================================
 // PANNEAU DE CONSULTATION (colonne de droite)
-// 4 onglets : Personnage principal, PNJ, Lieux, Événements.
+// 4 onglets : Personnages principaux, PNJ, Lieux, Événements.
 // On lit et on modifie les fiches sans quitter l'écriture.
-// Une fiche peut être épinglée : elle reste affichée en haut du panneau.
+// Deux fiches au plus peuvent être épinglées (par exemple, deux personnages principaux) :
+// elles restent affichées en haut du panneau.
 // =====================================================================
 
 import * as db from "./db.js";
@@ -10,6 +11,7 @@ import { el, nouvelId } from "./outils.js";
 import { confirmer, informer } from "./dialogues.js";
 import {
   etat, trouverFiche, fichesDe, annoncer, ecouter, deplacerEvenement, evenementsDe, chapitresTries, scenesDe, trouverScene,
+  fichesEpinglees, estEpinglee, noterEpinglees, MAX_EPINGLEES,
 } from "./etat.js";
 import { revenirAuTexte, allerAuNom } from "./editeur.js";
 import { estReperable, passagesDeLaScene, toutEstLu, quandToutEstLu } from "./reperage.js";
@@ -52,7 +54,7 @@ const vue = {
   onglet: "principal",   // onglet ouvert
   ficheId: null,         // fiche ouverte (null = la liste)
   edition: false,        // true = formulaire de modification
-  epingleeRepliee: false,
+  repliees: new Set(),   // les fiches épinglées réduites à leur nom
 };
 
 let ficheModifiee = null;   // fiche en attente d'enregistrement
@@ -94,8 +96,8 @@ export function initialiserPanneau() {
     else if (action === "termine") terminerEdition();
     else if (action === "supprimer-fiche") supprimerFiche(id);
     else if (action === "epingler") epingler(id);
-    else if (action === "desepingler") epingler(null);
-    else if (action === "replier") replierEpinglee();
+    else if (action === "desepingler") desepingler(id);
+    else if (action === "replier") replierEpinglee(id);
     else if (action === "monter") deplacer(id, -1);
     else if (action === "descendre") deplacer(id, +1);
     else if (action === "voir-frise") annoncer("voir-frise", id || null); // (la frise suit cette fiche, s'il y en a une)
@@ -150,7 +152,9 @@ export async function preparerPanneau() {
   vue.onglet = CATEGORIES[memo.onglet] ? memo.onglet : "principal";
   vue.ficheId = trouverFiche(memo.ficheId) ? memo.ficheId : null;
   vue.edition = false;
-  vue.epingleeRepliee = !!memo.epingleeRepliee;
+  vue.repliees = new Set(Array.isArray(memo.repliees) ? memo.repliees : []);
+  // (version précédente : une seule fiche épinglée, repliée ou non)
+  if (memo.epingleeRepliee && etat.roman.ficheEpinglee) vue.repliees.add(etat.roman.ficheEpinglee);
   afficherPanneau();
 }
 
@@ -162,7 +166,8 @@ export async function fermerPanneau() {
 function memoriserVue() {
   if (!etat.roman) return;
   db.ecrireReglage("panneau:" + etat.roman.id, {
-    onglet: vue.onglet, ficheId: vue.ficheId, epingleeRepliee: vue.epingleeRepliee,
+    onglet: vue.onglet, ficheId: vue.ficheId,
+    repliees: [...vue.repliees].filter(estEpinglee), // (seulement celles qui sont encore épinglées)
   });
 }
 
@@ -221,11 +226,12 @@ async function terminerEdition() {
   if (titre) titre.focus({ preventScroll: true });
 }
 
-function replierEpinglee() {
-  vue.epingleeRepliee = !vue.epingleeRepliee;
+function replierEpinglee(id) {
+  if (vue.repliees.has(id)) vue.repliees.delete(id);
+  else vue.repliees.add(id);
   afficherEpinglee();
   memoriserVue();
-  const b = $("epinglee").querySelector('[data-action="replier"]');
+  const b = $("epinglee").querySelector(`[data-action="replier"][data-id="${CSS.escape(id || "")}"]`);
   if (b) b.focus();
 }
 
@@ -246,23 +252,26 @@ export function afficherPanneau() {
   memoriserVue();
 }
 
-// La fiche épinglée, toujours visible en haut du panneau
+// Les fiches épinglées (deux au plus), toujours visibles en haut du panneau
 function afficherEpinglee() {
   const zone = $("epinglee");
-  const fiche = trouverFiche(etat.roman.ficheEpinglee);
+  const fiches = fichesEpinglees();
   zone.replaceChildren();
-  zone.hidden = !fiche;
-  if (!fiche) return;
-  zone.append(
-    el("div", { class: "epinglee-tete" },
-      el("span", { class: "etiquette" }, "📌 Épinglé"),
-      el("button", { type: "button", class: "lien-discret", "data-action": "replier", "aria-expanded": String(!vue.epingleeRepliee) },
-        vue.epingleeRepliee ? "Déplier" : "Replier"),
-    ),
-    vue.epingleeRepliee
-      ? el("button", { type: "button", class: "epinglee-titre-seul", "data-action": "ouvrir-fiche", "data-id": fiche.id }, fiche.titre || "Sans nom")
-      : vueLecture(fiche, { compacte: true }),
-  );
+  zone.hidden = !fiches.length;
+  zone.append(...fiches.map((fiche) => {
+    const repliee = vue.repliees.has(fiche.id);
+    return el("div", { class: "epinglee-fiche" },
+      el("div", { class: "epinglee-tete" },
+        el("span", { class: "etiquette" }, "📌 Épinglé"),
+        el("button", { type: "button", class: "lien-discret", "data-action": "replier", "data-id": fiche.id,
+          "aria-expanded": String(!repliee), "aria-label": `${repliee ? "Déplier" : "Replier"} « ${fiche.titre || "Sans nom"} »` },
+        repliee ? "Déplier" : "Replier"),
+      ),
+      repliee
+        ? el("button", { type: "button", class: "epinglee-titre-seul", "data-action": "ouvrir-fiche", "data-id": fiche.id }, fiche.titre || "Sans nom")
+        : vueLecture(fiche, { compacte: true }),
+    );
+  }));
 }
 
 function afficherContenu() {
@@ -311,12 +320,16 @@ function vueListe(categorie) {
   }
   return el("div", { class: "liste-fiches" },
     bouton,
+    // Un seul personnage principal : on rappelle qu'on peut en avoir un deuxième (épinglé lui aussi)
+    categorie === "principal" && fiches.length === 1
+      ? el("p", { class: "discret petit" }, "Un deuxième personnage principal ? Créez sa fiche : elle sera épinglée elle aussi.")
+      : null,
     el("ul", { class: "fiches" },
       fiches.map((f) => el("li", {},
         el("button", { type: "button", class: "fiche-item", "data-action": "ouvrir-fiche", "data-id": f.id },
           el("span", { class: "fiche-item-titre" }, f.titre || "Sans nom"),
           f.type ? el("span", { class: "fiche-item-type" }, f.type) : null,
-          etat.roman.ficheEpinglee === f.id ? el("span", { class: "fiche-item-epingle", title: "Épinglée" }, "📌") : null,
+          estEpinglee(f.id) ? el("span", { class: "fiche-item-epingle", title: "Épinglée" }, "📌") : null,
         ),
       )),
     ),
@@ -325,7 +338,8 @@ function vueListe(categorie) {
 
 function messageVide(categorie) {
   return {
-    principal: "Aucune fiche de personnage principal. Créez-la : elle pourra rester épinglée pendant que vous écrivez.",
+    principal: "Aucune fiche de personnage principal. Créez-la (et celle d'un deuxième, s'il y en a deux) : "
+      + "elles resteront épinglées en haut du panneau pendant que vous écrivez.",
     pnj: "Aucun PNJ pour l'instant.",
     lieu: "Aucun lieu pour l'instant.",
     evenement: "Aucun événement pour l'instant. Ajoutez-les dans l'ordre où ils se sont passés.",
@@ -336,7 +350,7 @@ function messageVide(categorie) {
 
 function vueLecture(fiche, { compacte }) {
   const cat = CATEGORIES[fiche.categorie];
-  const epinglee = etat.roman.ficheEpinglee === fiche.id;
+  const epinglee = estEpinglee(fiche.id);
   const champs = cat.champs
     .filter(([cle]) => (fiche.champs?.[cle] || "").trim())
     .map(([cle, libelle]) => [el("dt", {}, libelle), el("dd", {}, fiche.champs[cle])]);
@@ -356,7 +370,7 @@ function vueLecture(fiche, { compacte }) {
     el("div", { class: "fiche-actions" },
       el("button", { type: "button", class: "petit-bouton", "data-action": "modifier", "data-id": fiche.id }, "✎ Modifier"),
       epinglee
-        ? el("button", { type: "button", class: "petit-bouton", "data-action": "desepingler" }, "Désépingler")
+        ? el("button", { type: "button", class: "petit-bouton", "data-action": "desepingler", "data-id": fiche.id }, "Désépingler")
         : el("button", { type: "button", class: "petit-bouton", "data-action": "epingler", "data-id": fiche.id }, "📌 Épingler"),
     ),
   );
@@ -591,7 +605,7 @@ export async function sauverFiche() {
   if (!trouverFiche(fiche.id)) return true; // supprimée entre-temps
   try {
     await db.ecrire("fiches", { ...fiche, champs: { ...fiche.champs } });
-    if (etat.roman && etat.roman.ficheEpinglee === fiche.id) afficherEpinglee(); // la fiche épinglée suit les changements
+    if (etat.roman && estEpinglee(fiche.id)) afficherEpinglee(); // les fiches épinglées suivent les changements
     annoncer("fiches-changees"); // (nom changé : les fiches repérées dans le texte suivent)
     return true;
   } catch (erreur) {
@@ -619,9 +633,10 @@ export async function creerFiche(categorie, { titre = null, edition = true, focu
   };
   etat.fiches.push(fiche);
   const aEcrire = { fiches: [fiche] };
-  // Le premier personnage principal s'épingle tout seul
-  if (categorie === "principal" && !trouverFiche(etat.roman.ficheEpinglee)) {
-    etat.roman.ficheEpinglee = fiche.id;
+  // Les deux premiers personnages principaux s'épinglent tout seuls (s'il reste de la place)
+  const epinglees = fichesEpinglees().map((f) => f.id);
+  if (categorie === "principal" && epinglees.length < MAX_EPINGLEES) {
+    noterEpinglees([...epinglees, fiche.id]);
     aEcrire.romans = [etat.roman];
   }
   // Le formulaire s'affiche tout de suite ; l'enregistrement suit (sans faire attendre).
@@ -652,14 +667,18 @@ async function supprimerFiche(id) {
     e.champs.lieux = (e.champs.lieux || []).filter((x) => x !== id);
     if (e.champs.personnages.length + e.champs.lieux.length !== avant) evenementsModifies.push(e);
   }
+  const etaitEpinglee = estEpinglee(id);
   etat.fiches = etat.fiches.filter((f) => f.id !== id);
   annoncer("fiches-changees");
   const aEcrire = { fiches: evenementsModifies };
-  if (etat.roman.ficheEpinglee === id) {
-    // Un autre personnage principal (s'il y en a) prend sa place
-    etat.roman.ficheEpinglee = fichesDe("principal")[0]?.id || null;
+  if (etaitEpinglee) {
+    // Un autre personnage principal (pas encore épinglé, s'il y en a) prend sa place
+    const restent = fichesEpinglees().map((f) => f.id);
+    const remplacant = fichesDe("principal").find((f) => !restent.includes(f.id));
+    noterEpinglees(remplacant ? [...restent, remplacant.id] : restent);
     aEcrire.romans = [etat.roman];
   }
+  vue.repliees.delete(id);
   await db.lot({ ecrire: aEcrire, supprimer: { fiches: [id] } });
   informer(`« ${fiche.titre || "Sans nom"} » a été supprimée.`);
   vue.ficheId = null;
@@ -679,11 +698,28 @@ function garderLeClavier(...selecteurs) {
   if (onglet) onglet.focus({ preventScroll: true });
 }
 
+// Épingle une fiche, sous celles qui le sont déjà. S'il y en a déjà deux, la plus ancienne laisse sa place.
 async function epingler(id) {
+  if (!trouverFiche(id)) return;
   sauverFiche();
-  etat.roman.ficheEpinglee = id;
-  vue.epingleeRepliee = false;
-  // L'écran change tout de suite ; l'enregistrement suit
+  const ids = fichesEpinglees().map((f) => f.id).filter((x) => x !== id);
+  ids.push(id);
+  const retiree = ids.length > MAX_EPINGLEES ? trouverFiche(ids.shift()) : null;
+  noterEpinglees(ids);
+  vue.repliees.delete(id);
+  await apresEpinglage();
+  if (retiree) informer(`« ${retiree.titre || "Sans nom"} » n'est plus épinglée : deux fiches au plus restent en haut du panneau.`);
+}
+
+async function desepingler(id) {
+  sauverFiche();
+  noterEpinglees(fichesEpinglees().map((f) => f.id).filter((x) => x !== id));
+  vue.repliees.delete(id);
+  await apresEpinglage();
+}
+
+// L'écran change tout de suite ; l'enregistrement suit
+async function apresEpinglage() {
   afficherPanneau();
   garderLeClavier('#contenu-panneau [data-action="epingler"]', '#contenu-panneau [data-action="desepingler"]',
     '#epinglee [data-action="desepingler"]');

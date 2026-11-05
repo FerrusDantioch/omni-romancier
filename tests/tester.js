@@ -66,5 +66,37 @@ lancer('Omni-Romancier', async () => {
     verifier(contenu.includes('Valombre') && contenu.includes('auberge'), 'le fichier contient le roman et sa scène');
   });
 
+  await section('Deux personnages principaux épinglés', async () => {
+    await p.click('#liste-romans a:has-text("Ouvrir")');
+    await p.waitForSelector('#vue-roman:not([hidden])');
+    await p.waitForTimeout(500);
+    for (const [nom, apparence] of [['Ilyan', 'Grand, une cicatrice'], ['Maëlle', 'Cheveux courts']]) {
+      await p.click('[data-onglet="principal"]');
+      await p.click('#contenu-panneau [data-action="nouvelle"]');
+      await p.fill('#contenu-panneau input[name="titre"]', nom);
+      await p.fill('#contenu-panneau textarea[name="apparence"]', apparence);
+      await p.click('#contenu-panneau button[type="submit"]');
+      await p.waitForTimeout(500);
+    }
+    const epinglees = await p.$$eval('#epinglee .epinglee-fiche .fiche-titre', (l) => l.map((e) => e.textContent));
+    verifier(epinglees.join() === 'Ilyan,Maëlle', 'les deux personnages principaux sont épinglés', epinglees.join());
+  });
+
+  await section('Export avec les notes et les fiches', async () => {
+    await p.click('[data-mode="notes"]');
+    await p.click('#texte-notes');
+    await p.keyboard.type('Indice caché sous le comptoir');
+    await p.waitForTimeout(800);
+    await p.click('#bouton-pdf');
+    await p.waitForSelector('dialog[open]');
+    await p.check('dialog[open] input[name="type"][value="epub"]');
+    await p.check('dialog[open] input[name="notes"]');
+    await p.check('dialog[open] input[name="fiches"]');
+    const [telechargement] = await Promise.all([p.waitForEvent('download', { timeout: 10000 }), p.click('dialog[open] button[type="submit"]')]);
+    const contenu = fs.readFileSync(await telechargement.path()).toString('latin1'); // (ePub non compressé : le texte se lit tel quel)
+    verifier(contenu.includes('Notes des sc') && contenu.includes('comptoir'), 'les notes des scènes sont dans l’ePub');
+    verifier(contenu.includes('Fiches') && contenu.includes('cicatrice') && contenu.includes('Cheveux courts'), 'les fiches sont dans l’ePub');
+  });
+
   await ctx.close();
 });

@@ -88,6 +88,26 @@ export async function deplacerEvenement(id, sens) {
   return true;
 }
 
+// ---------- Fiches épinglées (deux au plus : par exemple, deux personnages principaux) ----------
+// Elles sont notées dans le roman : ficheEpinglee (la première) et ficheEpinglee2 (la deuxième).
+
+export const MAX_EPINGLEES = 2;
+
+// Les fiches épinglées qui existent encore, dans l'ordre
+export function fichesEpinglees() {
+  if (!etat.roman) return [];
+  const ids = [etat.roman.ficheEpinglee, etat.roman.ficheEpinglee2];
+  return ids.filter((id, i) => id && ids.indexOf(id) === i).map(trouverFiche).filter(Boolean);
+}
+export function estEpinglee(id) {
+  return !!id && fichesEpinglees().some((f) => f.id === id);
+}
+// Note les fiches épinglées (une liste d'identifiants, deux au plus) dans le roman
+export function noterEpinglees(ids) {
+  etat.roman.ficheEpinglee = ids[0] || null;
+  etat.roman.ficheEpinglee2 = ids[1] || null;
+}
+
 // Les événements où apparaît une fiche (personnage ou lieu), dans l'ordre
 export function evenementsDe(ficheId) {
   return fichesDe("evenement").filter((e) =>
