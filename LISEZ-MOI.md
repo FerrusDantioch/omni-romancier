@@ -647,9 +647,9 @@ Le bilan s’affiche à la fin : « Échecs : 0 » veut dire que tout va bien.
 
 ## Conception
 
-Omni-Romancier a été conçu par **Ferrus Dantioch** et **Claude**, l'assistant d'intelligence artificielle
-d'Anthropic : Ferrus Dantioch, créateur de l'Omni-système, en a imaginé l'idée, les besoins et
-l'apparence ; Claude en a écrit le code.
+Omni-Romancier a été conçu par **Ferrus Dantioch**, avec l'aide de l'intelligence artificielle :
+Ferrus Dantioch, créateur de l'Omni-système, en a imaginé l'idée, les besoins et
+l'apparence ; l'intelligence artificielle en a écrit le code.
 (C'est aussi indiqué dans la page « À propos » de l'application.)
 
 Pour découvrir l'Omni-système : **le portfolio**, https://ferrusdantioch.github.io/omni-systeme/
