@@ -22,7 +22,7 @@
 // Version de l'application (la même que dans js/app.js, affichée dans « À propos »).
 // La changer à chaque publication, pour s'y retrouver (la nouvelle version est de toute façon
 // repérée en comparant les fichiers, voir verifier()).
-const VERSION = "1.12.0";
+const VERSION = "1.12.1";
 const RESERVE = "omni-romancier";
 const ATTENTE = "omni-romancier-attente";   // la nouvelle version, qui attend « Mettre à jour »
 const COMPLETE = "__attente-complete__";     // déposée en dernier : la réserve d'attente est entière
