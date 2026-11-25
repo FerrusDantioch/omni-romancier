@@ -57,10 +57,10 @@ export async function exporter() {
     if (complet === false) {
       // Le fichier est créé quand même (mieux que rien), mais on ne prétend pas que tout est exporté
       informer("Export fait, mais du texte récent n'a pas pu être enregistré et ne figure PAS dans ce fichier. "
-        + "Réessayez l'export dans un moment.", { erreur: true, duree: 15000 });
+        + "Réessaie l'export dans un moment.", { erreur: true, duree: 15000 });
     } else {
       await db.noterExport(maintenant);
-      informer("Sauvegarde exportée. Rangez le fichier en lieu sûr (clé USB, cloud…).");
+      informer("Sauvegarde exportée. Range le fichier en lieu sûr (clé USB, cloud…).");
     }
   } catch (erreur) {
     informer("L'export a échoué : " + erreur.message, { erreur: true });
@@ -92,7 +92,7 @@ export async function importer(fichier) {
     // (du texte récent n'a pas pu être enregistré : l'import l'effacerait, on s'arrête là)
     if (await avantExport() === false) {
       informer("Du texte récent n'a pas encore pu être enregistré : l'import est annulé pour ne pas le perdre. "
-        + "Réessayez dans un moment.", { erreur: true, duree: 10000 });
+        + "Réessaie dans un moment.", { erreur: true, duree: 10000 });
       return;
     }
     appareil = await db.monAppareil();
@@ -232,7 +232,11 @@ async function annulerDernierImport() {
   });
   if (!ok) return;
   try {
-    await avantExport();
+    if (await avantExport() === false) {
+      informer("Du texte récent n'a pas encore pu être enregistré : l'annulation est interrompue pour ne pas le perdre. "
+        + "Réessaie dans un moment.", { erreur: true, duree: 10000 });
+      return;
+    }
     await db.annulerImport();
   } catch (e) {
     informer("L'import n'a pas pu être annulé : " + e.message, { erreur: true });
@@ -266,7 +270,7 @@ export async function mettreAJourEtat() {
       el("li", {}, nonExporteDepuis ? "Des modifications n'ont pas encore été exportées." : "Tout est exporté."),
       el("li", {}, protege
         ? "Le navigateur s'est engagé à ne pas effacer ces données."
-        : "Le navigateur pourrait effacer ces données s'il manque de place : exportez régulièrement."),
+        : "Le navigateur pourrait effacer ces données s'il manque de place : exporte régulièrement."),
       // (sans import, aucune ligne : « null » s'afficherait sinon tel quel dans la liste)
       ...(dernierImport ? [el("li", {}, dernierImport.nature === "annulation"
         ? `Dernier import annulé le ${dateHeure(dernierImport.quand)} (on peut revenir sur cette annulation).`
@@ -284,7 +288,7 @@ export async function mettreAJourEtat() {
   bandeau.hidden = !afficher;
   if (afficher) {
     document.getElementById("rappel-texte").textContent = derniereExport
-      ? `Vos textes ne sont enregistrés que sur cet appareil. Dernier export : ${ilYa(derniereExport)}.`
-      : "Vos textes ne sont enregistrés que sur cet appareil, et vous ne les avez jamais exportés.";
+      ? `Tes textes ne sont enregistrés que sur cet appareil. Dernier export : ${ilYa(derniereExport)}.`
+      : "Tes textes ne sont enregistrés que sur cet appareil, et tu ne les as jamais exportés.";
   }
 }

@@ -93,7 +93,7 @@ export function majReperage() {
   // (le titre « Dans cette scène » et la case « Noms en couleur dans le texte » restent : seule la liste change)
   const liste = $("reperees-liste");
   if (!liste.firstChild) {
-    liste.append(el("div", { class: "pastilles" }), el("p", { class: "discret petit" }, "Aucun personnage ni lieu de vos fiches n'est nommé ici."));
+    liste.append(el("div", { class: "pastilles" }), el("p", { class: "discret petit" }, "Aucun personnage ni lieu de tes fiches n'est nommé ici."));
   }
   const [pastilles, aucune] = liste.children;
   aucune.hidden = trouvees.length > 0;

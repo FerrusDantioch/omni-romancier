@@ -47,6 +47,7 @@
   --discret:#a59cbb;     /* texte secondaire */
   --omni:#a777ff;        /* violet du logo (accent principal) */
   --halo:#d6c2ff;        /* lueur de l'anneau */
+  --accent-clair:var(--halo); /* alias pour les contours de focus partagés */
   --sur-accent:#140d24;  /* texte posé sur un bouton violet */
   --danger:#e0705f;      /* actions dangereuses (supprimer) */
   --trouvaille:#ffd666;  /* passages trouvés par « Rechercher » (surlignés dans le texte) */

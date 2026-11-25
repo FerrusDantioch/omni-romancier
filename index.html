@@ -3,27 +3,39 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <title>Omni-Romancier</title>
-<meta name="description" content="Écriture de romans tirés des parties de l'Omni-système.">
+<meta name="description" content="Écris tes romans tirés des parties de l'Omni-système.">
 <meta name="theme-color" content="#14111d">
 <!-- Omni-Romancier n'apparaît pas dans les moteurs de recherche : son adresse se partage directement -->
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" href="assets/favicon.png">
-<link rel="apple-touch-icon" href="assets/icone-192.png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <!-- Description de l'application (nom, icônes, couleurs) : permet de l'installer -->
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" href="manifest.webmanifest">
 
 <!-- Polices chargées en avance (fichiers locaux, pas d'internet) -->
 <link rel="preload" href="fonts/oxanium.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="fonts/literata.woff2" as="font" type="font/woff2" crossorigin>
 
+<!-- Modules principaux préchargés en parallèle -->
+<link rel="modulepreload" href="js/app.js">
+<link rel="modulepreload" href="js/db.js">
+<link rel="modulepreload" href="js/etat.js">
+<link rel="modulepreload" href="js/editeur.js">
+<link rel="modulepreload" href="js/outils.js">
+
 <!-- Styles : theme.css d'abord (les variables), puis la mise en page -->
 <link rel="stylesheet" href="css/theme.css">
 <link rel="stylesheet" href="css/app.css">
 <link rel="stylesheet" href="correcteur/correcteur.css">
-<link rel="stylesheet" href="css/impression.css">
+<link rel="stylesheet" href="css/impression.css" media="print">
+
+<script src="js/config.js"></script>
 </head>
 <body>
+
+<a class="lien-evitement" href="#contenu-principal">Aller au contenu</a>
 
 <!-- ============ EN-TÊTE ============ -->
 <header class="entete">
@@ -43,7 +55,7 @@
 <section class="alerte-demarrage" id="alerte-demarrage" role="alert" hidden>
   <h1>L'application n'a pas pu démarrer</h1>
   <p id="alerte-raison"></p>
-  <p class="discret">Vos romans ne sont pas touchés : ils sont rangés dans le navigateur.</p>
+  <p class="discret">Tes romans ne sont pas touchés : ils sont rangés dans ton navigateur.</p>
 </section>
 
 <!-- ============ ALERTE : Omni-Romancier est déjà ouvert dans une autre page (cachée normalement) ============ -->
@@ -67,17 +79,17 @@
 </div>
 
 <!-- ============ NOUVELLE VERSION PRÊTE (voir js/hors-ligne.js) ============
-     Rien ne change tant que l'on n'a pas touché « Mettre à jour ». -->
+     Rien ne change tant que tu n'as pas cliqué sur « Mettre à jour ». -->
 <div class="rappel" id="bandeau-mise-a-jour" role="status" hidden>
-  <p>Une nouvelle version d'Omni-Romancier est prête. Vos romans restent tels quels.</p>
+  <p>Une nouvelle version d'Omni-Romancier est prête. Tes romans restent tels quels.</p>
   <div class="ligne">
     <button class="bouton bouton-petit" type="button" id="bouton-mise-a-jour">Mettre à jour</button>
   </div>
 </div>
 
-<main>
+<main id="contenu-principal" tabindex="-1">
   <!-- ============ BIBLIOTHÈQUE ============ -->
-  <section class="vue" id="vue-bibliotheque" aria-labelledby="titre-bibliotheque">
+  <section class="vue" id="vue-bibliotheque" aria-labelledby="titre-bibliotheque" hidden>
     <div class="vue-tete">
       <div>
         <p class="etiquette">Mes romans</p>
@@ -91,9 +103,9 @@
     <!-- Sauvegarde de sécurité -->
     <section class="encart-sauvegarde" aria-labelledby="titre-sauvegarde">
       <h2 id="titre-sauvegarde">Sauvegarde de sécurité</h2>
-      <p class="discret">Vos romans sont enregistrés automatiquement, mais uniquement dans ce navigateur, sur cet appareil. Exportez-les régulièrement dans un fichier et rangez-le en lieu sûr.</p>
-      <p class="discret">Pour écrire sur deux appareils : exportez sur l'un, puis importez ce fichier sur l'autre en choisissant « Fusionner ».</p>
-      <ul class="losanges discret" id="etat-sauvegarde" style="--c:var(--omni)"></ul>
+      <p class="discret">Tes romans sont enregistrés automatiquement, mais uniquement dans ce navigateur, sur cet appareil. Exporte-les régulièrement dans un fichier et range-le en lieu sûr.</p>
+      <p class="discret">Pour écrire sur deux appareils : exporte sur l'un, puis importe ce fichier sur l'autre en choisissant « Fusionner ».</p>
+      <ul class="losanges losanges-omni discret" id="etat-sauvegarde"></ul>
       <div class="ligne">
         <button class="bouton" type="button" data-action="exporter">Exporter mes données</button>
         <button class="petit-bouton" type="button" id="bouton-importer">Importer mes données</button>
@@ -106,7 +118,7 @@
     <section class="encart-installation" id="encart-installation" aria-labelledby="titre-installation" hidden>
       <h2 id="titre-installation">Installer Omni-Romancier</h2>
       <p class="discret">Une icône sur l'écran d'accueil ou le bureau, une fenêtre à part, et Omni-Romancier s'ouvre même sans connexion
-        ni petit serveur. Vos romans restent les mêmes.</p>
+        ni petit serveur. Tes romans restent les mêmes.</p>
       <div class="ligne"><button class="bouton" type="button" id="bouton-installer">Installer l'application</button></div>
     </section>
   </section>
@@ -151,7 +163,7 @@
       <div class="editeur-vide" id="editeur-vide">
         <p class="etiquette">Prêt à écrire</p>
         <h2 id="editeur-vide-titre">Ce roman est encore vide</h2>
-        <p class="discret" id="editeur-vide-texte">Créez un premier chapitre : une première scène sera ouverte, prête à recevoir vos notes.</p>
+        <p class="discret" id="editeur-vide-texte">Crée un premier chapitre : une première scène sera ouverte, prête à recevoir tes notes.</p>
         <button class="bouton" type="button" id="bouton-premier-chapitre">Créer le premier chapitre</button>
       </div>
 
@@ -279,31 +291,32 @@
   <section class="vue" id="vue-apropos" aria-labelledby="titre-apropos" hidden>
     <div class="apropos">
       <div class="apropos-tete">
-        <div class="medaillon"><img src="assets/logo-rond.png" alt="Logo de l'Omni-système : un dé à 20 faces violet entouré d'un anneau lumineux"></div>
+        <div class="medaillon"><img id="apropos-logo" src="assets/logo-rond.png" alt="Logo de l'Omni-système : un dé à 20 faces violet entouré d'un anneau lumineux" loading="lazy" width="96" height="96"></div>
         <div>
           <p class="etiquette">À propos</p>
           <h1 id="titre-apropos">Omni-Romancier</h1>
-          <p class="version">version <span id="numero-version"></span></p>
+          <p class="version">version <span id="apropos-version">1.13.0</span><span id="numero-version" hidden></span></p>
           <p class="discret petit" id="etat-hors-ligne"></p>
+          <p class="apropos-maj"><button class="petit-bouton" type="button" id="bouton-verifier-maj">Vérifier les mises à jour</button></p>
         </div>
       </div>
 
-      <p>Un outil d'écriture pour transformer les parties de l'Omni-système en romans. Les fiches des personnages, des lieux et des événements restent à portée de main, à côté du texte.</p>
-      <p>Tout reste sur cet appareil : aucun compte, aucun serveur, aucune connexion nécessaire. Pensez à exporter vos données régulièrement.</p>
+      <p>Un outil d'écriture pour transformer tes parties de l'Omni-système en romans. Les fiches des personnages, des lieux et des événements restent à portée de main, à côté du texte.</p>
+      <p>Tout reste sur cet appareil : aucun compte, aucun serveur, aucune connexion nécessaire. Pense à exporter tes données régulièrement.</p>
 
       <hr class="pointilles">
 
-      <div>
-        <p class="etiquette" style="margin-bottom:var(--esp-3)">Les univers</p>
+      <div class="apropos-univers">
+        <p class="etiquette">Les univers</p>
         <div class="palette">
-          <div class="carte cyber"><h3>Cyberpunk</h3><span class="statut" style="--c:var(--cyber);justify-self:start">Néons</span></div>
-          <div class="carte fantasy"><h3>Fantasy</h3><span class="statut" style="--c:var(--fantasy);justify-self:start">Légendes</span></div>
-          <div class="carte space"><h3>Space opéra</h3><span class="statut" style="--c:var(--space);justify-self:start">Étoiles</span></div>
-          <div class="carte horreur"><h3>Horreur / enquête</h3><span class="statut" style="--c:var(--horreur);--c-texte:var(--horreur-texte);justify-self:start">Ombres</span></div>
+          <div class="carte cyber"><h2>Cyberpunk</h2><span class="statut">Néons</span></div>
+          <div class="carte fantasy"><h2>Fantasy</h2><span class="statut">Légendes</span></div>
+          <div class="carte space"><h2>Space opéra</h2><span class="statut">Étoiles</span></div>
+          <div class="carte horreur"><h2>Horreur / enquête</h2><span class="statut">Ombres</span></div>
         </div>
       </div>
 
-      <ul class="losanges" style="--c:var(--omni)">
+      <ul class="losanges losanges-omni">
         <li>Écrire en mode <em>Notes</em> ou <em>Rédigé</em>, ou les deux côte à côte</li>
         <li>Consulter une fiche sans quitter le texte (<span class="mono">Ctrl+K</span>)</li>
         <li>Voir d'un coup d'œil les personnages et lieux nommés dans la scène, en couleur dans le texte</li>
@@ -312,7 +325,7 @@
         <li>Suivre les événements sur une frise, et voir qui apparaît où</li>
         <li>Écrire sur deux appareils : exporter sur l'un, fusionner sur l'autre</li>
         <li>Exporter en PDF, mise en page de livre (<span class="mono">Ctrl+P</span>), en ePub pour une liseuse, ou en Word pour faire relire</li>
-        <li>Repérer les fautes d'orthographe, même hors ligne : les noms de vos fiches ne sont jamais signalés</li>
+        <li>Repérer les fautes d'orthographe, même hors ligne : les noms de tes fiches ne sont jamais signalés</li>
       </ul>
 
       <hr class="pointilles">
@@ -325,14 +338,17 @@
         <!-- Le portfolio de l'Omni-système (s'ouvre à part : Omni-Romancier reste ouvert) -->
         <p><a class="lien-portfolio" href="https://ferrusdantioch.github.io/omni-systeme/" target="_blank" rel="noopener">Découvrir l'Omni-système : le portfolio ↗</a></p>
         <!-- Licence du code : texte complet dans le fichier LICENSE du dépôt. -->
-        <p>© 2026 Ferrus Dantioch — <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.fr" target="_blank" rel="noopener noreferrer">Creative Commons BY-NC-ND 4.0</a> : partage autorisé en citant l'auteur, sans usage commercial ni modification.</p>
+        <p>© 2026 Ferrus Dantioch — <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/deed.fr" target="_blank" rel="noopener noreferrer">Creative Commons BY-NC-ND 4.0</a> (Attribution – Pas d'Utilisation Commerciale – Pas de Modification 4.0 International) : partage autorisé en citant l'auteur, sans usage commercial ni modification.</p>
         <!-- Le dictionnaire du correcteur a sa propre licence (MPL 2.0) : voir correcteur/LICENCE-dictionnaire.txt. -->
         <p class="discret petit">Correcteur orthographique : dictionnaire français « Classique » 7.5 d'Olivier R. et des contributeurs de
           <a href="https://grammalecte.net/" target="_blank" rel="noopener noreferrer">Grammalecte</a> (Dicollecte), sous licence
           <a href="correcteur/LICENCE-dictionnaire.txt" target="_blank" rel="noopener">Mozilla Public License 2.0</a>.</p>
+        <!-- Les polices ont leur propre licence (SIL OFL 1.1) : voir fonts/OFL.txt. -->
+        <p class="discret petit">Polices locales : Oxanium, Literata et JetBrains Mono, sous licence
+          <a href="fonts/OFL.txt" target="_blank" rel="noopener">SIL Open Font License 1.1</a>.</p>
         <!-- Retours : une adresse-alias (Proton) créée pour ça. Le lien ouvre seulement
              l'application de messagerie, adresse et sujet déjà remplis : rien ne part tout seul. -->
-        <p>Une idée, une remarque, un souci ? Vos retours sont les bienvenus :
+        <p>Une idée, une remarque, un souci ? Tes retours sont les bienvenus :
           <a class="adresse-mail" href="mailto:omni-systeme.choking513@passmail.net?subject=Retour%20sur%20Omni-Romancier">omni-systeme.choking513@passmail.net</a></p>
       </div>
 
@@ -362,31 +378,8 @@
 <!-- ============ LIVRE À IMPRIMER (invisible à l'écran, rempli au moment de l'export PDF) ============ -->
 <div id="impression" lang="fr"></div>
 
-<!-- Si l'application ne peut pas démarrer, on l'explique au lieu d'afficher des boutons qui ne répondent pas.
-     Cas le plus fréquent : index.html ouvert par double-clic, sans le petit serveur. -->
-<script>
-  function alerteDemarrage(detail) {
-    var local = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
-    var raison = location.protocol === "file:"
-      ? "La page a été ouverte directement (double-clic sur index.html). Elle doit passer par le petit serveur : "
-        + "suivez l'étape B du fichier LISEZ-MOI.md, puis ouvrez l'adresse http://localhost:8000"
-      : local
-        ? "Rechargez la page. Si le problème continue, arrêtez le petit serveur et lancez-le avec « py serveur.py » "
-          + "(Mac : « python3 serveur.py »), ou utilisez une version à jour de Chrome ou d'Edge."
-        : "Rechargez la page, avec une connexion à Internet si possible (une mise à jour d'Omni-Romancier était "
-          + "peut-être en cours). Si le problème continue, utilisez une version à jour de Chrome ou d'Edge.";
-    document.getElementById("alerte-raison").textContent = raison + (detail ? " (détail : " + detail + ")" : "");
-    document.getElementById("alerte-demarrage").hidden = false;
-    document.querySelector("main").hidden = true;
-  }
-  // Un fichier de l'application refuse de se charger avec les autres (par exemple une ancienne copie
-  // mêlée à une nouvelle, juste après une mise à jour) : on le dit, plutôt que de laisser une page
-  // qui ne répond pas. (« applicationChargee » est posé par js/app.js, une fois tous les fichiers chargés.)
-  window.addEventListener("error", function (e) {
-    if (!window.applicationChargee && document.getElementById("alerte-demarrage").hidden) alerteDemarrage(e.message);
-  });
-</script>
+<script src="js/secours-demarrage.js"></script>
 <!-- Le script principal (type="module" = découpé proprement en fichiers) -->
-<script type="module" src="js/app.js" onerror="alerteDemarrage()"></script>
+<script type="module" src="js/app.js"></script>
 </body>
 </html>

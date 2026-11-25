@@ -37,6 +37,7 @@ const FORMATS = {
 let pret = false;       // un livre est prêt à être imprimé
 let fenetreOuverte = false; // la fenêtre « Exporter en PDF » est en train de s'ouvrir (évite d'en ouvrir deux)
 let titreAvant = "";    // titre de l'onglet, remis après l'impression
+let feuillePage = null; // feuille CSS adoptée pour le format de page (compatible CSP stricte)
 
 const $ = (id) => document.getElementById(id);
 // Un roman est ouvert, sur sa page d'écriture ou sur sa frise des événements
@@ -110,7 +111,7 @@ async function choisirEtExporter(typeVoulu) {
     Object.entries(FORMATS).map(([cle, f]) => radio("format", cle, cle === formatMemo, f.nom)),
   );
   const conseilPdf = el("span", { hidden: typeChoisi !== "pdf" },
-    " Dans la fenêtre d'impression qui va s'ouvrir, choisissez la destination « Enregistrer au format PDF ».");
+    " Dans la fenêtre d'impression qui va s'ouvrir, choisis la destination « Enregistrer au format PDF ».");
   const surType = (e) => {
     const type = e.target.form.elements.type.value;
     formatPdf.hidden = conseilPdf.hidden = type !== "pdf";
@@ -175,7 +176,7 @@ function exporterFichier(choix) {
   try {
     const { fichier, nom } = (choix.type === "epub" ? creerEpub : creerDocx)(livre);
     telecharger(fichier, nom);
-    informer(`Fichier créé : « ${nom} ». Il est dans vos téléchargements.`, { duree: 6000 });
+    informer(`Fichier créé : « ${nom} ». Il est dans tes téléchargements.`, { duree: 6000 });
   } catch (erreur) {
     informer("Le fichier n'a pas pu être créé : " + erreur.message, { erreur: true });
   }
@@ -229,14 +230,14 @@ export function contenuDuLivre({ portee, chapitreId, notes = false, fiches = fal
   if (!chapitres.length && !annexes.length) {
     informer(notes || fiches
       ? "Rien à exporter : le texte rédigé est vide, et il n'y a ni notes ni fiches à ajouter."
-      : "Rien à exporter : le texte rédigé est vide. (Pour exporter les notes, cochez « Les notes des scènes ».)");
+      : "Rien à exporter : le texte rédigé est vide. (Pour exporter les notes, coche « Les notes des scènes ».)");
     return null;
   }
   return {
     titre: typographie(etat.roman.titre || "Sans titre"),
     sousTitre: sousTitre ? typographie(sousTitre) : null,
     chapitres: [...chapitres, ...annexes],
-    nom: etat.roman.titre + (sousTitre ? " — " + sousTitre : ""),
+    nom: (etat.roman.titre || "Sans titre") + (sousTitre ? " — " + sousTitre : ""),
   };
 }
 
@@ -353,8 +354,10 @@ function nettoyer() {
   if (!pret) return;
   pret = false;
   $("impression").replaceChildren();
-  const style = $("style-page-livre");
-  if (style) style.remove(); // une impression ordinaire, plus tard, ne garde pas le format du livre
+  if (feuillePage) {
+    // Une impression ordinaire, plus tard, ne garde pas le format du livre
+    document.adoptedStyleSheets = document.adoptedStyleSheets.filter((s) => s !== feuillePage);
+  }
   document.documentElement.classList.remove("impression-livre");
   document.title = titreAvant;
   revenirAuTexte();
@@ -362,7 +365,7 @@ function nettoyer() {
 
 function pageTitre(sousTitre) {
   return el("section", { class: "livre-page-titre" },
-    el("h1", { class: "livre-titre" }, typographie(etat.roman.titre)),
+    el("h1", { class: "livre-titre" }, typographie(etat.roman.titre || "Sans titre")),
     sousTitre ? el("p", { class: "livre-sous-titre" }, sousTitre) : null,
     el("hr", { class: "livre-filet" }),
     el("p", { class: "livre-signature" }, SIGNATURE),
@@ -371,13 +374,8 @@ function pageTitre(sousTitre) {
 
 // Règles de page (format, marges, numéro de page, mention en pied de page)
 function styleDePage(f, pageDeTitre) {
-  let style = $("style-page-livre");
-  if (!style) {
-    style = el("style", { id: "style-page-livre" });
-    document.head.append(style);
-  }
   const pied = `font: italic 7pt "Literata", Georgia, serif; color: #555;`;
-  style.textContent = `
+  const regles = `
 @media print {
   @page {
     size: ${f.taille};
@@ -392,6 +390,11 @@ function styleDePage(f, pageDeTitre) {
     --livre-haut-chapitre: ${f.hautChapitre};
   }
 }`;
+  if (!feuillePage) feuillePage = new CSSStyleSheet();
+  feuillePage.replaceSync(regles);
+  if (!document.adoptedStyleSheets.includes(feuillePage)) {
+    document.adoptedStyleSheets = [...document.adoptedStyleSheets, feuillePage];
+  }
 }
 
 // =====================================================================

@@ -96,11 +96,15 @@
 }
 
 .correcteur-suggestion:hover,
-.correcteur-action:hover,
+.correcteur-action:hover {
+  background: var(--correcteur-survol, #ebe8f2);
+}
+
 .correcteur-suggestion:focus-visible,
 .correcteur-action:focus-visible {
   background: var(--correcteur-survol, #ebe8f2);
-  outline: none;
+  outline: 3px solid var(--accent-clair, #d6c2ff);
+  outline-offset: 1px;
 }
 
 .correcteur-bulle .correcteur-message {
@@ -128,6 +132,7 @@
 }
 
 .correcteur-ajout button {
+  min-width: 44px;
   min-height: 44px;
 }
 
@@ -169,5 +174,6 @@
 
 .correcteur-liste button {
   flex: none;
+  min-width: 44px;
   min-height: 44px;
 }

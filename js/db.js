@@ -107,7 +107,7 @@ export function ouvrirBase() {
       ok(base);
     };
     demande.onerror = () => echec(demande.error);
-    demande.onblocked = () => echec(new Error("Fermez les autres onglets d'Omni-Romancier, puis rechargez la page."));
+    demande.onblocked = () => echec(new Error("Ferme les autres onglets d'Omni-Romancier, puis recharge la page."));
   });
 }
 
@@ -297,9 +297,16 @@ export async function lireToutesLesDonnees() {
   const tx = db.transaction(MAGASINS);
   const donnees = {};
   await Promise.all(MAGASINS.map(async (nom) => {
-    donnees[nom] = await attendre(tx.objectStore(nom).getAll());
+    if (nom !== "reglages") {
+      donnees[nom] = await attendre(tx.objectStore(nom).getAll());
+      return;
+    }
+    // Filtrage par clés pour ne jamais charger « avantImport » (copie entière de la base) en RAM
+    const magasin = tx.objectStore("reglages");
+    const cles = (await attendre(magasin.getAllKeys())).filter((cle) => cle !== "avantImport");
+    const valeurs = await Promise.all(cles.map((cle) => attendre(magasin.get(cle))));
+    donnees.reglages = valeurs.filter(Boolean);
   }));
-  donnees.reglages = donnees.reglages.filter((r) => r.cle !== "avantImport");
   return donnees;
 }
 
@@ -362,19 +369,24 @@ const REGLES = {
   fiches:    { ids: ["id", "romanId", "categorie"], textes: ["titre", "type", "notes"], nombres: ["ordre", "modifie"] },
   reglages:  { ids: ["cle"], textes: [], nombres: [] },
 };
+const SUIVI_TEXTES = ["origine"];
+const SUIVI_NOMBRES = ["maj", "majTexte", "majTitre", "majPlace"];
 const CATEGORIES_FICHES = ["principal", "pnj", "lieu", "evenement"];
 
 // Renvoie ce qui ne va pas dans un élément, ou null s'il est correct
 function defautElement(nom, e) {
   if (!e || typeof e !== "object" || Array.isArray(e)) return "un élément illisible";
   const regle = REGLES[nom];
+  const suivi = MAGASINS_SUIVIS.includes(nom);
+  const textes = suivi ? [...regle.textes, ...SUIVI_TEXTES] : regle.textes;
+  const nombres = suivi ? [...regle.nombres, ...SUIVI_NOMBRES] : regle.nombres;
   for (const champ of regle.ids) {
     if (typeof e[champ] !== "string" || e[champ] === "") return `un élément sans « ${champ} » valable`;
   }
-  for (const champ of regle.textes) {
+  for (const champ of textes) {
     if (e[champ] != null && typeof e[champ] !== "string") return `« ${champ} » n'est pas du texte`;
   }
-  for (const champ of regle.nombres) {
+  for (const champ of nombres) {
     if (e[champ] != null && !Number.isFinite(e[champ])) return `« ${champ} » n'est pas un nombre`;
   }
   if (nom === "fiches") {
@@ -396,7 +408,7 @@ export function verifierSauvegarde(objet) {
   if (!objet || typeof objet !== "object") return "Ce fichier ne contient pas de données lisibles.";
   if (objet.format !== FORMAT_EXPORT) return "Ce fichier n'est pas une sauvegarde d'Omni-Romancier.";
   if (typeof objet.version !== "number" || objet.version > VERSION_EXPORT) {
-    return "Cette sauvegarde vient d'une version plus récente d'Omni-Romancier. Mettez l'application à jour.";
+    return "Cette sauvegarde vient d'une version plus récente d'Omni-Romancier. Mets l'application à jour.";
   }
   const d = objet.donnees;
   if (!d || typeof d !== "object") return "La sauvegarde est incomplète (aucune donnée).";

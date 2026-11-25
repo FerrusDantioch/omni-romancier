@@ -117,6 +117,41 @@ export function dateFichier(ms = Date.now()) {
   return d.getFullYear() + "-" + deux(d.getMonth() + 1) + "-" + deux(d.getDate());
 }
 
+// Lit une valeur de stockage sous « nouvelleCle » ; si absente, migre doucement
+// depuis « ancienneCle » sans perte de données.
+export function lireAvecMigration(nouvelleCle, ancienneCle, stockage = localStorage) {
+  try {
+    const valeur = stockage.getItem(nouvelleCle);
+    if (valeur !== null) return valeur;
+    const ancienne = stockage.getItem(ancienneCle);
+    if (ancienne === null) return null;
+    try {
+      stockage.setItem(nouvelleCle, ancienne);
+      stockage.removeItem(ancienneCle);
+    } catch { /* stockage plein ou lecture seule : on garde l'ancienne clé pour ne rien perdre */ }
+    return ancienne;
+  } catch {
+    return null;
+  }
+}
+
+// Sur petit ou moyen écran, quand un volet (« Plan » ou « Fiches ») est ouvert,
+// rend l'arrière-plan inerte (piège Tab) ; sinon, tout redevient actif.
+export function majInertVolets() {
+  const vue = document.getElementById("vue-roman");
+  if (!vue) return;
+  const plan = document.getElementById("plan");
+  const panneau = document.getElementById("panneau");
+  const editeur = vue.querySelector(".editeur");
+  const entete = document.querySelector(".entete");
+  const planVolet = !vue.hidden && vue.classList.contains("plan-ouvert") && plan && getComputedStyle(plan).position === "fixed";
+  const panneauVolet = !vue.hidden && vue.classList.contains("panneau-ouvert") && panneau && getComputedStyle(panneau).position === "fixed";
+  if (plan) plan.inert = !!panneauVolet;
+  if (panneau) panneau.inert = !!planVolet;
+  if (editeur) editeur.inert = !!(planVolet || panneauVolet);
+  if (entete) entete.inert = !!(planVolet || panneauVolet);
+}
+
 // ---------- Mesurer le texte d'une zone de texte (<textarea>) ----------
 
 // Ce qui doit être identique pour qu'un texte se coupe en lignes comme celui d'une zone de texte
@@ -132,6 +167,7 @@ export const STYLES_DU_TEXTE = [
 // Au centième de pixel près : une colonne mesure par exemple 452,4 pixels,
 // et une largeur arrondie à 452 couperait parfois les lignes une lettre plus loin.
 export function placeDuTexte(zone) {
+  if (!zone.offsetParent) return null;
   const cs = getComputedStyle(zone);
   const boite = zone.getBoundingClientRect();
   const parent = zone.offsetParent, cadre = parent.getBoundingClientRect();
@@ -149,11 +185,13 @@ export function placeDuTexte(zone) {
 // À quelle hauteur (en pixels, depuis le haut du texte) se trouve la ligne d'une position du texte.
 // On recopie le texte jusqu'à cette position dans un double invisible, et l'on mesure.
 export function hauteurDansLeTexte(zone, position) {
+  const place = placeDuTexte(zone);
+  if (!place) return 0;
   const cs = getComputedStyle(zone);
   const double = document.createElement("div");
   for (const p of STYLES_DU_TEXTE) double.style[p] = cs[p];
   Object.assign(double.style, {
-    position: "absolute", visibility: "hidden", top: "0", left: "-100000px", width: placeDuTexte(zone).largeur + "px",
+    position: "absolute", visibility: "hidden", top: "0", left: "-100000px", width: place.largeur + "px",
   });
   double.textContent = zone.value.slice(0, position);
   const repere = double.appendChild(document.createElement("span"));

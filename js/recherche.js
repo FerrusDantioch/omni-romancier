@@ -199,7 +199,7 @@ function afficher(requete) {
   liste.replaceChildren();
   if (resultats.length === 0) {
     liste.append(el("li", { class: "recherche-vide", role: "option", "aria-disabled": "true" },
-      etat.fiches.length ? "Aucune fiche trouvée." : "Aucune fiche pour l'instant : tapez un nom pour en créer une."));
+      etat.fiches.length ? "Aucune fiche trouvée." : "Aucune fiche pour l'instant : tape un nom pour en créer une."));
     saisie.removeAttribute("aria-activedescendant");
     return;
   }
@@ -284,7 +284,7 @@ async function choisir(index, { modifier = false } = {}) {
     fiche = await creerFiche(r.creer, { titre: r.titre, edition: modifier, focus: modifier });
   } else {
     fiche = r.fiche;
-    ouvrirFiche(fiche.id, { edition: modifier, focus: modifier });
+    await ouvrirFiche(fiche.id, { edition: modifier, focus: modifier });
   }
   // Mémorise comme fiche récente
   const anciennes = (recentes.get(etat.roman.id) || []).filter((id) => id !== fiche.id);

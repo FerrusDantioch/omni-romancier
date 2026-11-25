@@ -80,7 +80,7 @@ function effacementDeLaLigne(texte, ligne) {
  * @param {string} texte  le texte actuel
  * @param {number} debut  début de la sélection
  * @param {number} fin  fin de la sélection (= debut si rien n'est sélectionné)
- * @param {'arriere'|'avant'|'inserer'} action  retour arrière, Suppr, ou texte tapé
+ * @param {'arriere'|'avant'|'supprimer'|'inserer'} action  retour arrière, Suppr, suppression directe, ou texte tapé
  * @param {string} [donnee]  le texte tapé (pour « inserer » ; « \n » pour Entrée)
  */
 export function corrigerSaisie(texte, debut, fin, action, donnee = '') {
@@ -102,6 +102,10 @@ export function corrigerSaisie(texte, debut, fin, action, donnee = '') {
   const position = debut;
   const ligne = ligneA(texte, position);
   const dansUnRepere = estSautDePage(ligne.texte);
+
+  if (action === 'supprimer') {
+    return dansUnRepere ? effacementDeLaLigne(texte, ligne) : null;
+  }
 
   if (action === 'arriere') {
     if (position === 0) return null;

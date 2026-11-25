@@ -46,9 +46,13 @@ export function ouvrirDialogue({ titre, corps, ok = "Valider", annuler = "Annule
         fermer(true);
       }
     });
-    // Échap ou fermeture : on rend la réponse, puis on retire la fenêtre de la page
+    const declencheur = document.activeElement;
+    // Échap ou fermeture : on rend la réponse, on retire la fenêtre et on restaure le focus
     dialogue.addEventListener("close", () => {
       dialogue.remove();
+      if (declencheur && declencheur.isConnected && typeof declencheur.focus === "function") {
+        declencheur.focus({ preventScroll: true });
+      }
       repondre(reponse);
     });
 
@@ -75,7 +79,8 @@ export async function confirmer({ titre, message, ok = "Confirmer", danger = fal
 export function informer(message, { duree = 4000, erreur = false } = {}) {
   let zone = document.getElementById("notifications");
   if (!zone) {
-    zone = el("div", { id: "notifications", "aria-live": "polite" });
+    // Chaque bulle porte déjà role="status" ou role="alert" (évite une double live-region)
+    zone = el("div", { id: "notifications" });
     document.body.append(zone);
   }
   const enEcriture = () => {

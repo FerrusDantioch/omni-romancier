@@ -4,14 +4,37 @@
 // =====================================================================
 
 import * as db from "./db.js";
-import { el, nouvelId, nombre, pluriel, UNIVERS, ecrireTexte } from "./outils.js";
+import { el, nouvelId, nombre, pluriel, UNIVERS, ecrireTexte, majInertVolets } from "./outils.js";
 import { ouvrirDialogue, confirmer, informer } from "./dialogues.js";
 import {
   etat, chapitresTries, scenesDe, trouverScene, trouverChapitre, scenesDansLOrdre,
   motsScene, motsChapitre, motsRoman, oublierScene, annoncer,
 } from "./etat.js";
+import { basculerVolet } from "./panneau.js";
 
 let ajoutEnCours = false; // évite deux scènes identiques sur un double-clic
+let declencheurPlan = null; // élément à refocaliser quand le volet Plan se referme
+
+function basculerPlan(forcer) {
+  const vue = document.getElementById("vue-roman");
+  const plan = document.getElementById("plan");
+  const etaitOuvert = vue.classList.contains("plan-ouvert");
+  const ouvert = vue.classList.toggle("plan-ouvert", forcer);
+  if (ouvert) vue.classList.remove("panneau-ouvert"); // un seul volet à la fois
+  document.getElementById("bouton-plan").setAttribute("aria-expanded", String(ouvert));
+  majInertVolets();
+  if (ouvert && !etaitOuvert && getComputedStyle(plan).position === "fixed") {
+    declencheurPlan = document.activeElement;
+    const cible = plan.querySelector('.plan-ouvrir[aria-current="true"], .retour, button, a');
+    if (cible) cible.focus({ preventScroll: true });
+  } else if (!ouvert && etaitOuvert) {
+    if (declencheurPlan?.isConnected && !plan.contains(declencheurPlan)) {
+      declencheurPlan.focus({ preventScroll: true });
+    }
+    declencheurPlan = null;
+  }
+  return ouvert;
+}
 
 export function initialiserPlan() {
   document.getElementById("bouton-ajout-chapitre").addEventListener("click", ajouterChapitre);
@@ -34,18 +57,23 @@ export function initialiserPlan() {
   new MutationObserver(() => {
     document.getElementById("bouton-plan").setAttribute("aria-expanded", String(vue.classList.contains("plan-ouvert")));
     document.getElementById("bouton-fiches").setAttribute("aria-expanded", String(vue.classList.contains("panneau-ouvert")));
-  }).observe(vue, { attributes: true, attributeFilter: ["class"] });
-  document.getElementById("bouton-plan").addEventListener("click", () => {
-    if (vue.classList.toggle("plan-ouvert")) vue.classList.remove("panneau-ouvert"); // un seul volet à la fois
-  });
+    majInertVolets();
+  }).observe(vue, { attributes: true, attributeFilter: ["class", "hidden"] });
+  window.addEventListener("resize", majInertVolets);
+  document.getElementById("bouton-plan").addEventListener("click", () => basculerPlan());
   // Toucher le voile sombre (à côté d'un volet) referme les volets ; Échap referme le plan
   vue.addEventListener("click", (e) => {
-    if (e.target === vue) vue.classList.remove("plan-ouvert", "panneau-ouvert");
+    if (e.target !== vue) return;
+    if (vue.classList.contains("panneau-ouvert")) basculerVolet(false);
+    if (vue.classList.contains("plan-ouvert")) basculerPlan(false);
   });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape" && !e.defaultPrevented && vue.classList.contains("plan-ouvert") && !document.querySelector("dialog[open]")) {
-      vue.classList.remove("plan-ouvert");
-      document.getElementById("bouton-plan").focus();
+      e.preventDefault();
+      basculerPlan(false);
+      if (!document.activeElement || document.activeElement === document.body) {
+        document.getElementById("bouton-plan").focus();
+      }
     }
   });
 }
@@ -135,7 +163,8 @@ export function marquerActive(sceneId) {
 }
 
 function ouvrirScene(id) {
-  document.getElementById("vue-roman").classList.remove("plan-ouvert"); // petit écran : referme le plan
+  declencheurPlan = null; // le focus ira dans le texte de la scène
+  basculerPlan(false); // petit écran : referme le plan
   annoncer("ouvrir-scene", id);
 }
 
@@ -242,6 +271,7 @@ async function deplacer(type, id, sens) {
     await db.lot({ ecrire: { chapitres: renumeroter(liste) } });
   } else {
     const scene = trouverScene(id);
+    if (!scene) return;
     const chapitres = chapitresTries();
     const ci = chapitres.findIndex((c) => c.id === scene.chapitreId);
     const soeurs = scenesDe(scene.chapitreId);
@@ -285,6 +315,7 @@ async function supprimer(type, id) {
   let voisine = null;
   if (type === "chapitre") {
     const chapitre = trouverChapitre(id);
+    if (!chapitre) return;
     const scenes = scenesDe(id);
     const ok = await confirmer({
       titre: "Supprimer ce chapitre ?",
@@ -296,16 +327,20 @@ async function supprimer(type, id) {
       danger: true,
     });
     if (!ok) return;
-    voisine = voisineDe(scenes.map((s) => s.id));
+    const idsSupprimes = scenes.map((s) => s.id);
+    voisine = voisineDe(idsSupprimes);
     // D'abord on retire de la mémoire (une sauvegarde automatique en cours ne pourra plus les réécrire),
     // ensuite on efface de la base
     etat.chapitres = etat.chapitres.filter((c) => c.id !== id);
     for (const s of scenes) oublierScene(s.id);
     etat.scenes = etat.scenes.filter((s) => s.chapitreId !== id);
-    await db.lot({ supprimer: { chapitres: [id], scenes: scenes.map((s) => s.id) } });
+    await db.lot({ supprimer: { chapitres: [id], scenes: idsSupprimes } });
     informer(`« ${chapitre.titre} » a été supprimé.`);
+    await apresChangement();
+    await annoncer("scene-supprimee", { voisine, ids: idsSupprimes });
   } else {
     const scene = trouverScene(id);
+    if (!scene) return;
     const ok = await confirmer({
       titre: "Supprimer cette scène ?",
       message: [
@@ -321,9 +356,9 @@ async function supprimer(type, id) {
     etat.scenes = etat.scenes.filter((s) => s.id !== id);
     await db.supprimer("scenes", id);
     informer(`« ${scene.titre} » a été supprimée.`);
+    await apresChangement();
+    await annoncer("scene-supprimee", { voisine, ids: [id] });
   }
-  await apresChangement();
-  await annoncer("scene-supprimee", { voisine });
   // Le plan a été redessiné : si le clavier s'est perdu, il revient sur la scène voisine (ou « + Chapitre »)
   if (document.activeElement === document.body || !document.activeElement) {
     const cible = (voisine && document.querySelector(`.plan-ouvrir[data-id="${CSS.escape(voisine)}"]`))

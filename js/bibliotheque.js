@@ -5,6 +5,7 @@
 import * as db from "./db.js";
 import { UNIVERS, el, nouvelId, compterMots, pluriel, ilYa } from "./outils.js";
 import { ouvrirDialogue, confirmer, informer } from "./dialogues.js";
+import { effacerSecoursDe } from "./editeur.js";
 
 // Appelé après chaque changement (pour mettre à jour le rappel de sauvegarde, etc.)
 let apresChangement = () => {};
@@ -17,6 +18,8 @@ export function initialiserBibliotheque({ quandCaChange }) {
 // ---------- Affichage de la liste ----------
 
 export async function afficherBibliotheque() {
+  const vue = document.getElementById("vue-bibliotheque");
+  if (vue) vue.hidden = false;
   const liste = document.getElementById("liste-romans");
   const [romans, chapitres, scenes] = await Promise.all([
     db.lireTout("romans"), db.lireTout("chapitres"), db.lireTout("scenes"),
@@ -29,7 +32,7 @@ export async function afficherBibliotheque() {
   if (romans.length === 0) {
     liste.append(el("div", { class: "vide" },
       el("p", {}, "Aucun roman pour l'instant."),
-      el("p", { class: "discret" }, "Créez votre premier roman pour commencer à écrire."),
+      el("p", { class: "discret" }, "Crée ton premier roman pour commencer à écrire."),
       el("button", { class: "bouton", type: "button", onclick: creerRoman }, "Créer un roman"),
     ));
     return;
@@ -48,7 +51,7 @@ function carteRoman(roman, nbChapitres, nbScenes, nbMots) {
   const univers = UNIVERS[roman.univers] ? roman.univers : "autre";
   return el("article", { class: "carte roman-carte " + univers, "data-id": roman.id },
     el("span", { class: "statut", style: { "justify-self": "start" } }, UNIVERS[univers].nom),
-    el("h3", {},
+    el("h2", {},
       el("a", { href: "#roman/" + encodeURIComponent(roman.id), class: "titre-roman" }, roman.titre),
     ),
     el("p", { class: "discret petit" },
@@ -90,8 +93,8 @@ function champsRoman(roman) {
 function lireRoman(form) {
   const titre = form.elements.titre.value.trim();
   const univers = form.elements.univers.value;
-  if (!titre) return "Donnez un titre à votre roman.";
-  if (!UNIVERS[univers]) return "Choisissez un univers.";
+  if (!titre) return "Donne un titre à ton roman.";
+  if (!UNIVERS[univers]) return "Choisis un univers.";
   return { titre, univers };
 }
 
@@ -135,13 +138,14 @@ async function supprimerAvecConfirmation(roman) {
     titre: "Supprimer ce roman ?",
     message: [
       `« ${roman.titre} » sera supprimé définitivement, avec ${pluriel(chapitres.length, "chapitre")}, ${pluriel(scenes.length, "scène")} et ${pluriel(fiches.length, "fiche")}.`,
-      "Cette action ne peut pas être annulée (sauf si vous avez exporté vos données avant).",
+      "Cette action ne peut pas être annulée (sauf si tu as exporté tes données avant).",
     ],
     ok: "Supprimer définitivement",
     danger: true,
   });
   if (!ok) return;
   await db.supprimerRoman(roman.id);
+  effacerSecoursDe(scenes.map((s) => s.id));
   informer(`« ${roman.titre} » a été supprimé.`);
   await afficherBibliotheque();
   apresChangement();

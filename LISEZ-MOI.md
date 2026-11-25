@@ -4,10 +4,10 @@ Application d'écriture de romans tirés des parties de l'Omni-système.
 Elle s'installe comme une application, fonctionne **sans connexion**, et garde tout sur l'appareil
 (ordinateur ou téléphone).
 
-**Version 1.12** — les sept étapes prévues sont terminées, plus l'étape 8 (les fiches repérées dans le texte),
+**Version 1.13.0** — les sept étapes prévues sont terminées, plus l'étape 8 (les fiches repérées dans le texte),
 l'étape 9 (écrire sur deux appareils : la fusion), l'étape 10 (la frise des événements),
 l'étape 11 (les noms en couleur dans le texte), l'étape 12 (les notes à côté du texte rédigé),
-l'étape 13 (sur chaque fiche, les scènes où elle est nommée), l'étape 14 (l'export en ePub et en Word)
+l'étape 13 (sur chaque fiche, les scènes où elle est nommée), l'étape 14 (l'export en ePub et en Word),
 l'étape 15 (rechercher et remplacer dans tout le roman) et l'étape 16 (les notes et les fiches dans
 l'export, et deux personnages principaux épinglés côte à côte).
 
@@ -100,7 +100,7 @@ Une fois l'application installée, **plus besoin du serveur** pour écrire.
 - Le terminal affiche une ligne du type `Serving HTTP on … port 8000` : c'est bon signe.
 - Ouvrir **Chrome ou Edge** à l'adresse **http://localhost:8000**
 - Dans « À propos », la ligne **« Prête à fonctionner sans connexion ✓ »** confirme que l'application
-  s'est mise en réserve dans le navigateur. **Attendez de la voir avant d'arrêter le serveur.**
+  s'est mise en réserve dans le navigateur. **Attends de la voir avant d'arrêter le serveur.**
   Si elle commence par **⚠**, elle dit ce qui manque : le plus souvent, le serveur a été lancé depuis
   un autre dossier (refaire l'étape B depuis le dossier qui contient `index.html`), ou le dossier est
   incomplet (refaire l'étape A). Puis rouvrir http://localhost:8000.
@@ -127,7 +127,7 @@ Une fois l'application installée, **plus besoin du serveur** pour écrire.
 ## Mettre à jour Omni-Romancier (nouvelle version)
 
 1. Retélécharger le ZIP (étape A) et lancer le serveur **depuis le nouveau dossier**, avec la même
-   commande que d'habitude (étape B, ou `py serveur.py` si c'est elle qui marche chez vous), et le numéro `8000`.
+   commande que d'habitude (étape B, ou `py serveur.py` si c'est elle qui marche chez toi), et le numéro `8000`.
 2. Ouvrir Omni-Romancier (son icône, ou http://localhost:8000) : il télécharge la nouvelle version et la
    met de côté. Un bandeau **« Une nouvelle version d'Omni-Romancier est prête »** apparaît en haut.
 3. Toucher **« Mettre à jour »** : la page se recharge avec la nouvelle version. Tant qu'on ne touche pas
@@ -147,15 +147,15 @@ Les romans ne sont pas dans le dossier mais dans le navigateur : une mise à jou
     (Mac : `python3 serveur.py`).
 - **« Omni-Romancier est déjà ouvert ailleurs »** : l'application est ouverte dans un autre onglet ou une
   autre fenêtre (par exemple l'application installée **et** un onglet). Une seule page peut servir à
-  la fois, sinon chacune effacerait le travail de l'autre. Fermez l'autre page — celle-ci s'ouvre alors
-  toute seule — ou cliquez sur « Utiliser plutôt cette page » : l'autre enregistre tout et vous cède la place.
+  la fois, sinon chacune effacerait le travail de l'autre. Ferme l'autre page — celle-ci s'ouvre alors
+  toute seule — ou clique sur « Utiliser plutôt cette page » : l'autre enregistre tout et te cède la place.
 - **Bibliothèque vide alors qu'on avait des romans** : vérifier l'adresse. Le navigateur range les
   romans selon l'adresse exacte : **toujours `localhost:8000`** (avec `localhost:8001`, on verrait une
   bibliothèque vide ; rien ne serait perdu, juste rangé sous l'autre adresse).
 
 ## Écrire
 
-Ouvrez un roman depuis la Bibliothèque. L'écran se divise en trois colonnes :
+Ouvre un roman depuis la Bibliothèque. L'écran se divise en trois colonnes :
 **le plan** à gauche, **le texte** au centre, **la consultation des fiches** à droite.
 
 - **Plan** : « + Chapitre » et « + Scène » pour ajouter. Au survol d'une ligne apparaissent
@@ -167,17 +167,17 @@ Ouvrez un roman depuis la Bibliothèque. L'écran se divise en trois colonnes :
   *Rédigé* pour le texte du roman. On bascule à tout moment ; chacun garde son curseur.
 - **Les deux** (côte à côte) : les notes à gauche, le texte rédigé à droite, plus large.
   On rédige en gardant ses notes sous les yeux, et l'on peut écrire dans les deux :
-  cliquez dans l'un ou l'autre ; le titre de la colonne où vous écrivez est en couleur,
+  clique dans l'un ou l'autre ; le titre de la colonne où tu écris est en couleur,
   et les boutons I, G, * * * (et la puce, côté notes) agissent sur elle.
   - Ce bouton n'apparaît que si la colonne d'écriture est assez large (ordinateur, tablette tenue
-    en largeur). Si la fenêtre devient trop étroite, seul reste le texte où vous écriviez ;
+    en largeur). Si la fenêtre devient trop étroite, seul reste le texte où tu écrivais ;
     qu'elle s'élargisse de nouveau, et les deux reviennent. En mode concentration, les deux restent.
   - Le choix est gardé sur cet appareil, pour toutes les scènes. Pour revenir à un seul texte :
     « Notes » ou « Rédigé ».
   - Seuls ces boutons « Notes » et « Rédigé » changent le mode de la scène (et la mention « notes »
     dans le plan) : passer d'une colonne à l'autre n'y change rien.
-  - `Ctrl+Z` annule dans la colonne où vous écrivez. Limite : après un `Ctrl+Z` dans une colonne,
-    ce que vous aviez tapé juste avant dans l'autre ne peut plus être annulé (le navigateur ne garde
+  - `Ctrl+Z` annule dans la colonne où tu écris. Limite : après un `Ctrl+Z` dans une colonne,
+    ce que tu avais tapé juste avant dans l'autre ne peut plus être annulé (le navigateur ne garde
     qu'une seule liste d'annulations pour toute la page).
 - **Mise en forme** : `*italique*`, `**gras**`, et `* * *` (séparateur) sur sa propre ligne.
   Les boutons I, G et * * * insèrent ces symboles autour du texte sélectionné.
@@ -196,11 +196,11 @@ Ouvrez un roman depuis la Bibliothèque. L'écran se divise en trois colonnes :
   La session redémarre chaque jour, ou avec « Nouvelle session ». L'objectif se change
   avec « Changer l'objectif ».
 - **Orthographe** : une demi-seconde après la dernière frappe, les mots inconnus sont soulignés
-  d'une fine vague rouge (le mot que vous êtes en train de taper attend que le curseur le quitte).
+  d'une fine vague rouge (le mot que tu es en train de taper attend que le curseur le quitte).
   Toucher (ou cliquer) un mot souligné ouvre une bulle : jusqu'à 5 corrections (en toucher une
   remplace le mot ; `Ctrl+Z` l'annule), **« Ajouter au dictionnaire »** (le mot ne sera plus jamais
   souligné sur cet appareil) et **« Ignorer »** (jusqu'à la fermeture d'Omni-Romancier).
-  - Les **noms de vos fiches** (titres et « Autres noms ») sont acceptés d'office : inutile de les ajouter.
+  - Les **noms de tes fiches** (titres et « Autres noms ») sont acceptés d'office : inutile de les ajouter.
   - Lien **« Orthographe et dictionnaire »** sous le titre du roman (sur téléphone : « ☰ Plan ») :
     activer ou désactiver le correcteur, voir la liste des mots ajoutés, en ajouter, en retirer.
   - Tout se passe sur l'appareil, même en mode avion. Le dictionnaire (environ 2 Mo) est téléchargé
@@ -210,7 +210,7 @@ Ouvrez un roman depuis la Bibliothèque. L'écran se divise en trois colonnes :
 - **Enregistrement** : automatique, en continu (« Enregistré ✓ » en bas à droite).
   Même si l'onglet se ferme en pleine phrase, le texte est récupéré à la réouverture.
   Si « Non enregistré ! » s'affiche (disque plein…), le texte est gardé en secours dans le navigateur
-  et remis dans le roman dès que possible : ne videz pas les données du navigateur à ce moment-là.
+  et remis dans le roman dès que possible : ne vide pas les données du navigateur à ce moment-là.
 
 ## Consulter et modifier les fiches (colonne de droite)
 
@@ -220,9 +220,9 @@ Ouvrez un roman depuis la Bibliothèque. L'écran se divise en trois colonnes :
 - **Champs** : personnages → autres noms, apparence, caractère, background, relations ;
   lieux → autres noms, description, ambiance ; événements → date ou moment, résumé, personnages et lieux concernés.
   Chaque fiche a aussi un **type** libre (allié, taverne…) et des **notes libres**.
-- **Dans cette scène** (en haut du panneau) : les personnages et lieux de vos fiches qui sont nommés
+- **Dans cette scène** (en haut du panneau) : les personnages et lieux de tes fiches qui sont nommés
   dans la scène ouverte (notes et texte rédigé), dans l'ordre où ils apparaissent. La liste se met à
-  jour pendant que vous écrivez. Un clic ouvre la fiche, **le curseur reste dans le texte**.
+  jour pendant que tu écris. Un clic ouvre la fiche, **le curseur reste dans le texte**.
   Sur écran moyen ou petit, le bouton indique combien il y en a : « Fiches (3) ».
   Une fiche est repérée par :
   - son **nom complet** (« Mère Corbeau », même écrit « mère corbeau ») ;
@@ -239,7 +239,7 @@ Ouvrez un roman depuis la Bibliothèque. L'écran se divise en trois colonnes :
     Si un même mot nomme deux fiches (« Corbeau » : Mère Corbeau et la Taverne du Corbeau Noir),
     la bulle propose les deux. Taper au clavier ou toucher ailleurs la fait disparaître.
   - **`Ctrl+clic`** (Mac : `Cmd+clic`) sur un nom ouvre sa fiche directement.
-  - Pour écrire sans couleurs : décochez **« Noms en couleur dans le texte »**, sous « Dans cette scène ».
+  - Pour écrire sans couleurs : décoche **« Noms en couleur dans le texte »**, sous « Dans cette scène ».
     Ce choix est propre à chaque appareil. En mode concentration, les couleurs s'effacent d'elles-mêmes.
   - Un nom coupé par un retour à la ligne (« Mère » en fin de ligne, « Corbeau » au début de la suivante)
     n'est pas coloré en entier : seul « Corbeau » l'est, comme un nom d'un seul mot.
@@ -254,7 +254,7 @@ Ouvrez un roman depuis la Bibliothèque. L'écran se divise en trois colonnes :
     Si le nom n'est que dans les notes, ce sont elles qui s'affichent (le mode de la scène ne change pas).
   - **La scène ouverte** est marquée d'un trait de couleur : la toucher de nouveau mène au passage
     suivant (le texte rédigé d'abord, puis les notes), et après le dernier, de nouveau au premier.
-  - Comme après une recherche, le nom sélectionné serait remplacé si vous tapiez aussitôt :
+  - Comme après une recherche, le nom sélectionné serait remplacé si tu tapais aussitôt :
     un clic dans le texte, ou une flèche, retire la sélection (`Ctrl+Z` rétablit le nom au besoin).
   - La liste suit l'écriture : un nom tapé dans la scène ouverte y compte un instant après.
   - Juste après l'ouverture d'un gros roman (ou après avoir changé un nom de fiche), la liste peut
@@ -286,11 +286,11 @@ sur téléphone, dans le volet « ☰ Plan »), ou **« Voir la frise »** dans 
   longtemps, ou qu'un lieu revient souvent. Seuls les personnages et lieux reliés à au moins un
   événement sont listés (ceux cochés dans « Personnages concernés » et « Lieux concernés »).
   Sur téléphone, ce tableau est replié : le toucher pour l'ouvrir.
-- **Suivre** un personnage ou un lieu : touchez son nom (dans « Qui apparaît où » ou sur une carte).
+- **Suivre** un personnage ou un lieu : touche son nom (dans « Qui apparaît où » ou sur une carte).
   Ses événements ressortent, les autres s'effacent un peu, et un bandeau indique
-  « Vous suivez Mira : 3 événements sur 7 ». Retouchez le nom, ou « Tout afficher », pour arrêter.
+  « Tu suis Mira : 3 événements sur 7 ». Retouche le nom, ou « Tout afficher », pour arrêter.
   Depuis la fiche d'un personnage, « Suivre sur la frise » ouvre la frise en le suivant déjà.
-- **Ouvrir une fiche** : touchez le nom d'un événement (ou « Ouvrir sa fiche » pour le personnage suivi) :
+- **Ouvrir une fiche** : touche le nom d'un événement (ou « Ouvrir sa fiche » pour le personnage suivi) :
   on revient au texte, la fiche ouverte à côté, prête à être lue ou modifiée.
   « + Nouvel événement » fait de même avec une nouvelle fiche.
 - **Revenir au texte** : « ← Retour au texte », `Échap`, ou le bouton « retour » du téléphone.
@@ -301,11 +301,11 @@ sur téléphone, dans le volet « ☰ Plan »), ou **« Voir la frise »** dans 
 En pleine écriture, besoin de vérifier la couleur des yeux d'un PNJ ?
 
 1. **`Ctrl+K`** (Mac : `Cmd+K`) : la recherche s'ouvre.
-2. Tapez quelques lettres du nom : « corb » trouve « Mère Corbeau ».
+2. Tape quelques lettres du nom : « corb » trouve « Mère Corbeau ».
    Accents et majuscules sont ignorés. On peut aussi chercher par un autre nom (« vieille »),
    par type (« antagoniste ») ou par un mot du contenu de la fiche (« néons »).
-3. **`Entrée`** : la fiche s'ouvre dans le panneau, et **votre curseur reste exactement où il était**
-   dans le texte (même sélection, même défilement). Vous continuez d'écrire aussitôt.
+3. **`Entrée`** : la fiche s'ouvre dans le panneau, et **ton curseur reste exactement où il était**
+   dans le texte (même sélection, même défilement). Tu continues d'écrire aussitôt.
 4. **`Échap`** : la recherche se ferme, retour au texte sans rien changer.
 
 Autres possibilités : `↑` `↓` pour choisir parmi les résultats ; **`Ctrl+Entrée`** pour ouvrir la fiche
@@ -322,7 +322,7 @@ Pour retrouver un passage, ou renommer un personnage dans tout le roman.
 1. **`Ctrl+F`** (Mac : `Cmd+F`), ou le lien **« Rechercher et remplacer »** sous le titre du roman
    (sur téléphone : « ☰ Plan », puis ce lien). Une barre s'ouvre au-dessus du texte.
    Si un mot était sélectionné dans le texte, il est déjà tapé.
-2. Tapez le mot : il est cherché dans **toutes les scènes**, texte rédigé et notes.
+2. Tape le mot : il est cherché dans **toutes les scènes**, texte rédigé et notes.
    - Le nombre de passages s'affiche (« 8 passages dans 3 scènes ») ; la **liste** les montre scène par
      scène, avec un peu de texte autour ; dans le texte, chaque passage est **surligné**, et le passage
      courant est encadré.
@@ -330,16 +330,16 @@ Pour retrouver un passage, ou renommer un personnage dans tout le roman.
      **`Maj+Entrée`** (ou **↑**) : le précédent. Toucher une ligne de la liste y mène aussi.
      Le clavier reste dans la barre : on peut enchaîner.
    - **`Échap`** (ou **✕**) : la barre se ferme, le clavier revient dans le texte, sur le passage trouvé.
-3. Pour remplacer, tapez le nouveau texte dans **« Remplacer par »** : la liste montre aussitôt
+3. Pour remplacer, tape le nouveau texte dans **« Remplacer par »** : la liste montre aussitôt
    l'**aperçu** (l'ancien mot barré, le nouveau à côté).
    - **« Remplacer »** (ou `Entrée` dans ce champ) : remplace le passage encadré, puis va au suivant.
      Un passage pas encore montré est d'abord montré : on ne remplace que ce que l'on a vu.
    - **« Tout remplacer »** : remplace tous les passages d'un coup, après une confirmation qui dit combien.
    - **Annuler** : le bouton **« Annuler le remplacement »** (chaque clic défait un remplacement, du plus
-     récent au plus ancien), ou **`Ctrl+Z`** dans le texte juste après, tant que vous n'y avez rien retapé
-     et que vous n'avez pas changé de scène (ensuite, `Ctrl+Z` défait de nouveau ce que vous tapez, comme
-     d'habitude, et seul le bouton annule le remplacement). Une scène que vous avez retouchée depuis n'est pas
-     remise en arrière (rien de ce que vous avez écrit ensuite n'est effacé), et le message le dit.
+     récent au plus ancien), ou **`Ctrl+Z`** dans le texte juste après, tant que tu n'y as rien retapé
+     et que tu n'as pas changé de scène (ensuite, `Ctrl+Z` défait de nouveau ce que tu tapes, comme
+     d'habitude, et seul le bouton annule le remplacement). Une scène que tu as retouchée depuis n'est pas
+     remise en arrière (rien de ce que tu as écrit ensuite n'est effacé), et le message le dit.
 
 Les options (sur téléphone, derrière le bouton « Options ») :
 - **Majuscules exactes** : sans elle, « kaël » trouve aussi « Kaël » et « KAËL », et le remplacement garde
@@ -350,14 +350,14 @@ Les options (sur téléphone, derrière le bouton « Options ») :
 À savoir : les **accents comptent** (« a » ne trouve pas « à ») ; l'apostrophe droite `'` trouve aussi
 l'apostrophe typographique `’` ; les espaces tapées au début ou à la fin ne comptent pas (le clavier d'un
 téléphone en ajoute souvent une). Après « Ana » → « Anabelle », « Remplacer » ne remplace pas une seconde
-fois le « Ana » d'« Anabelle » (ni après « Tout remplacer »). Si vous écrivez dans le texte pendant que la barre est ouverte, la liste
-s'estompe et se remet à jour dès que vous revenez dans la barre. Les titres des scènes et les fiches ne
-sont pas concernés (renommez la fiche du personnage vous-même).
+fois le « Ana » d'« Anabelle » (ni après « Tout remplacer »). Si tu écris dans le texte pendant que la barre est ouverte, la liste
+s'estompe et se remet à jour dès que tu reviens dans la barre. Les titres des scènes et les fiches ne
+sont pas concernés (renomme la fiche du personnage toi-même).
 
 ## Exporter : PDF, ePub ou Word
 
-Dans la page d'écriture, cliquez sur **« Exporter (PDF, ePub, Word) »** (sous le titre du roman, à gauche).
-Choisissez **le roman entier**, **un chapitre** (dans la liste) ou **la scène ouverte**, puis le **type de fichier** :
+Dans la page d'écriture, clique sur **« Exporter (PDF, ePub, Word) »** (sous le titre du roman, à gauche).
+Choisis **le roman entier**, **un chapitre** (dans la liste) ou **la scène ouverte**, puis le **type de fichier** :
 
 | Type | Pour quoi faire |
 |---|---|
@@ -387,8 +387,8 @@ texte aligné à gauche, sans alinéa.
 
 ### ePub et Word
 
-1. Cochez **ePub** ou **Word (.docx)**, puis cliquez sur **« Créer le fichier ePub »** (ou « … Word »).
-2. Le fichier arrive dans vos **Téléchargements**, nommé d'après le titre du roman
+1. Coche **ePub** ou **Word (.docx)**, puis clique sur **« Créer le fichier ePub »** (ou « … Word »).
+2. Le fichier arrive dans tes **Téléchargements**, nommé d'après le titre du roman
    (par exemple `Les Cendres de Port-Sombre.epub` ; pour un chapitre, son titre est ajouté).
 
 - **L'ePub** : un sommaire des chapitres, chaque chapitre commençant sur une nouvelle page de la liseuse, la typographie
@@ -405,18 +405,18 @@ texte aligné à gauche, sans alinéa.
 
 ### PDF (mise en page de livre)
 
-1. Cochez **PDF** (c'est aussi ce qu'ouvrent **`Ctrl+P`** et le bouton **« Imprimer / PDF »** de la barre
-   d'outils, au-dessus du texte), puis choisissez le **format**
+1. Coche **PDF** (c'est aussi ce qu'ouvrent **`Ctrl+P`** et le bouton **« Imprimer / PDF »** de la barre
+   d'outils, au-dessus du texte), puis choisis le **format**
    (*Livre (A5)*, le format d'un roman, ou *Page A4*) ; avec ou sans **page de titre**.
-2. Cliquez sur **« Préparer le PDF »** : la fenêtre d'impression du navigateur s'ouvre.
-3. Dans **« Destination »**, choisissez **« Enregistrer au format PDF »**, puis **« Enregistrer »**.
-   Si la case **« En-têtes et pieds de page »** apparaît (dans « Plus de paramètres »), **décochez-la** :
+2. Clique sur **« Préparer le PDF »** : la fenêtre d'impression du navigateur s'ouvre.
+3. Dans **« Destination »**, choisis **« Enregistrer au format PDF »**, puis **« Enregistrer »**.
+   Si la case **« En-têtes et pieds de page »** apparaît (dans « Plus de paramètres »), **décoche-la** :
    sinon le navigateur ajoute sa propre date et l'adresse de la page.
 
 Comme le Word, le PDF commence chaque chapitre sur une nouvelle page et numérote les pages ; il a en plus
 la mention discrète **« Réalisé par Ferrus Dantioch »** en pied de page, à côté du numéro de page.
 Pour un roman entier, l'aperçu peut mettre quelques secondes à apparaître.
-Utilisez **Chrome ou Edge** : Firefox n'imprime pas encore les numéros de page ni la mention en pied de page.
+Utilise **Chrome ou Edge** : Firefox n'imprime pas encore les numéros de page ni la mention en pied de page.
 
 ## Raccourcis clavier
 
@@ -444,11 +444,11 @@ Sur Mac, `Cmd` remplace `Ctrl` (pour remplacer, `Cmd+H` masquant le navigateur :
 
 - Tout est enregistré **automatiquement**, dans le navigateur, **sur cet appareil uniquement**.
   Aucun compte, aucun serveur.
-- ⚠️ Si vous effacez les données de navigation du site, ou changez d'ordinateur ou de navigateur,
-  vous ne retrouverez pas vos romans… sauf si vous les avez **exportés**.
+- ⚠️ Si tu effaces les données de navigation du site, ou changes d'ordinateur ou de navigateur,
+  tu ne retrouveras pas tes romans… sauf si tu les as **exportés**.
 - **Exporter** : bouton « Exporter mes données » en bas de la Bibliothèque.
   Un fichier `omni-romancier-sauvegarde-AAAA-MM-JJ-appareil.json` est téléchargé
-  (par exemple `…-2026-10-15-telephone-android.json`). Rangez-le en lieu sûr (clé USB, cloud…).
+  (par exemple `…-2026-10-15-telephone-android.json`). Range-le en lieu sûr (clé USB, cloud…).
 - **Importer** : bouton « Importer mes données », puis choisir un fichier de sauvegarde.
   Omni-Romancier montre ce que contient le fichier et ce qui changerait, puis propose :
   - **Fusionner** (conseillé pour un fichier venant d'un autre appareil) : voir ci-dessous ;
@@ -467,9 +467,9 @@ Sur Mac, `Cmd` remplace `Ctrl` (pour remplacer, `Cmd+H` masquant le navigateur :
 
 Chaque appareil garde ses propres données : on passe de l'un à l'autre par le fichier d'export.
 
-1. Sur l'appareil où vous venez d'écrire : **« Exporter mes données »**.
-2. Faites passer le fichier sur l'autre appareil : envoyez-le-vous par e-mail, mettez-le sur
-   Google Drive, ou branchez le téléphone à l'ordinateur avec un câble. Sur Android, le fichier
+1. Sur l'appareil où tu viens d'écrire : **« Exporter mes données »**.
+2. Fais passer le fichier sur l'autre appareil : envoie-le-toi par e-mail, mets-le sur
+   Google Drive, ou branche le téléphone à l'ordinateur avec un câble. Sur Android, le fichier
    est dans **Téléchargements** (application « Fichiers »).
 3. Sur l'autre appareil : **« Importer mes données »**, choisir le fichier, puis **« Fusionner »**.
 
@@ -481,13 +481,13 @@ La fusion :
 - **supprime** ce qui a été supprimé sur l'autre appareil, sauf ce qui a été modifié après cette
   suppression, ou réécrit sur un appareil sans que celui qui l'a supprimé ait jamais vu cette version
   (du travail que l'autre n'a pas vu n'est jamais jeté : il est gardé, et la fusion le signale ;
-  supprimez-le de nouveau si c'était voulu) ;
+  supprime-le de nouveau si c'était voulu) ;
 - si une même scène a été **écrite sur les deux appareils** depuis le dernier échange, **les deux
   versions sont gardées** : la plus récente à sa place, l'autre juste après dans le plan, avec
-  « (autre version : téléphone Android) » dans son titre. Relisez-les, gardez la bonne, supprimez
+  « (autre version : téléphone Android) » dans son titre. Relis-les, garde la bonne, supprime
   l'autre. Pour une fiche modifiée des deux côtés, l'autre version est recopiée dans ses notes.
 
-Conseil : faites l'aller-retour à chaque changement d'appareil (exporter ici, fusionner là-bas),
+Conseil : fais l'aller-retour à chaque changement d'appareil (exporter ici, fusionner là-bas),
 pour éviter d'écrire la même scène des deux côtés.
 
 ## Changer l'apparence
@@ -497,7 +497,7 @@ Chaque ligne est commentée en français.
 
 ## Remplacer les logos
 
-Les logos actuels sont repris du portfolio. Pour mettre les vôtres, remplacez
+Les logos actuels sont repris du portfolio. Pour mettre les tiens, remplace
 dans `assets/` (en gardant les mêmes noms) :
 
 | Fichier | Rôle |
@@ -505,7 +505,8 @@ dans `assets/` (en gardant les mêmes noms) :
 | `logo.png` | logo de l'en-tête (carré) |
 | `logo-rond.png` | logo rond de la page « À propos » |
 | `icone-192.png`, `icone-512.png` | icônes de l'application installée (rondes, fond sombre) |
-| `icone-maskable-512.png` | icône carrée pleine (Android découpe lui-même la forme) |
+| `icone-maskable-192.png`, `icone-maskable-512.png` | icônes carrées pleines (Android découpe lui-même la forme) |
+| `apple-touch-icon.png` | icône d'écran d'accueil sur iPhone / iPad |
 | `favicon.png` | petite icône de l'onglet |
 | `icone.svg`, `icone-maskable.svg` | dessins sources des icônes (livre ouvert et plume), non utilisés par l'application : après une retouche, les reconvertir en PNG aux mêmes noms et tailles |
 
@@ -529,7 +530,7 @@ PDF ci-dessus. (Faits : notes et rédigé côte à côte, « Nommé dans ces sc�
 rechercher et remplacer.)
 
 À savoir :
-- **Remplacer les logos** par les vôtres (voir plus haut), si ceux repris du portfolio ne conviennent pas.
+- **Remplacer les logos** par les tiens (voir plus haut), si ceux repris du portfolio ne conviennent pas.
 - **Navigateur conseillé : Chrome ou Edge.** Firefox n'installe pas les applications de ce type et
   n'imprime pas les numéros de page du PDF. Safari (Mac, iPad) n'a pas été testé.
 - La **coupure des mots** en fin de ligne dans le PDF dépend du navigateur (elle peut manquer).
@@ -565,11 +566,11 @@ propose « Mettre à jour », et elle ne remplace l'ancienne qu'après cet appui
 n'apparaissent pas à l'adresse en ligne, ni ceux du téléphone sur l'ordinateur. Pour passer de
 l'un à l'autre : « Exporter mes données » d'un côté, puis « Importer mes données » de l'autre.
 
-**Une seule copie publiée** : ne publiez pas une seconde copie d'Omni-Romancier (un essai, une
+**Une seule copie publiée** : ne publie pas une seconde copie d'Omni-Romancier (un essai, une
 « fourche ») sous le même compte GitHub : elle serait à la même adresse de base et partagerait les
 mêmes romans, copies de secours et réglages que celle-ci.
 
-**Identité de l'application** : dans `manifest.json`, le champ `"id": "/omni-romancier/"` ne doit
+**Identité de l'application** : dans `manifest.webmanifest`, le champ `"id": "/omni-romancier/"` ne doit
 plus jamais changer. Chrome le lit à partir de la racine du site (`https://ferrusdantioch.github.io/`) :
 `"./"` aurait donné à Omni-Romancier l'identité de la racine, la même que d'autres applications du site.
 Et une application déjà installée dont l'`id` change devient, pour Chrome, une autre application.
@@ -578,20 +579,24 @@ Le changement de nom a changé son adresse, donc son `id` : il faut la réinstal
 adresse. Les romans ne sont pas perdus (le nom de la base de données n'a pas changé).
 
 **Retirer la publication** : sur GitHub, dans le dépôt, **Settings → Pages → « Unpublish site »**
-(ou le demander). Les romans déjà écrits restent sur l'appareil, mais pensez à les exporter avant.
+(ou le demander). Les romans déjà écrits restent sur l'appareil, mais pense à les exporter avant.
 
 ## Organisation des fichiers
 
 ```
 index.html     la page de l'application
-manifest.json  la carte d'identité de l'application (nom, icônes, couleurs) pour l'installer
+manifest.webmanifest  la carte d'identité de l'application (nom, icônes, couleurs) pour l'installer
 sw.js          le « service worker » : la réserve qui permet de fonctionner sans connexion
-               (à chaque publication : changer VERSION dans sw.js ET dans js/app.js)
+               (la version est centralisée dans js/config.js)
 serveur.py     petit serveur de secours (voir « Si quelque chose ne va pas »)
 .nojekyll      (fichier vide, caché) : GitHub Pages publie les fichiers tels quels
+.gitattributes impose les fins de ligne LF (critique pour le dictionnaire sous Windows)
+README.md      la présentation technique et générale
+CLAUDE.md      les consignes de développement du dépôt
 css/theme.css  toutes les couleurs et polices
 css/app.css    la mise en page
 css/impression.css  la mise en page de livre du PDF
+js/config.js        version, auteur, contact et licence (source unique pour la page et sw.js)
 js/app.js           le chef d'orchestre (navigation entre les pages)
 js/db.js            le stockage des données (IndexedDB) + export/import
 js/bibliotheque.js  la liste des romans
@@ -629,11 +634,18 @@ d’une personne et vérifient le résultat, y compris sans internet. Ils ne
 contactent aucun site. Ils ne servent qu’au développement : l’application
 n’en a pas besoin pour fonctionner.
 
-Il faut [Node.js](https://nodejs.org) (version 22 ou plus récente), puis,
-une seule fois, dans le dossier de l’application :
+Il faut [Node.js](https://nodejs.org) (version 22 ou plus récente). Les contrôles
+statiques s'exécutent sans dépendance :
 
 ```
-npm install playwright
+node tests/verifier-statique.mjs
+```
+
+Pour les tests navigateur complets (Playwright), une seule fois dans le dossier
+de l'application :
+
+```
+npm install --no-save playwright
 npx playwright install chromium
 ```
 
@@ -644,6 +656,11 @@ node tests/tester.js
 ```
 
 Le bilan s’affiche à la fin : « Échecs : 0 » veut dire que tout va bien.
+
+## Contact
+
+Une idée, une remarque, un souci ? Tu peux écrire à :
+**`omni-systeme.choking513@passmail.net`**
 
 ## Conception
 
