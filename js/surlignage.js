@@ -20,7 +20,7 @@
 // toucher un mot souligné ouvre alors la bulle de corrections.
 // =====================================================================
 
-import { el, STYLES_DU_TEXTE, placeDuTexte } from "./outils.js";
+import { el, STYLES_DU_TEXTE, placeDuTexte, lireAvecMigration } from "./outils.js";
 import { etat, ecouter, trouverFiche } from "./etat.js";
 import { CATEGORIES, ouvrirFiche, basculerVolet } from "./panneau.js";
 import { estReperable, preparerNoms, nomsDansLeTexte, signatureDesNoms } from "./reperage.js";
@@ -28,7 +28,8 @@ import { estSautDePage } from "../commun/saut-de-page.js";
 import { correcteur, fautesDeLigne, initialiserOrthographe, proposerCorrections, fermerBulle as fermerCorrections, replacerBulle } from "./orthographe.js";
 
 // Le choix « noms en couleur », propre à cet appareil (gardé dans le navigateur)
-const CLE_CHOIX = "atelier-surlignage";
+const CLE_CHOIX = "omni-romancier-surlignage";
+const ANCIENNE_CLE_CHOIX = "atelier-surlignage";
 
 let actif = true;
 let noms = [];             // les noms à chercher (ceux des fiches repérables du roman)
@@ -50,7 +51,7 @@ const $ = (id) => document.getElementById(id);
 // =====================================================================
 
 export function initialiserSurlignage() {
-  try { actif = localStorage.getItem(CLE_CHOIX) !== "non"; } catch { /* stockage indisponible : on colore */ }
+  actif = lireAvecMigration(CLE_CHOIX, ANCIENNE_CLE_CHOIX) !== "non";
   $("surligner").checked = actif;
   $("surligner").addEventListener("change", (e) => {
     actif = e.target.checked;
@@ -96,7 +97,9 @@ export function initialiserSurlignage() {
   });
 
   const bulle = $("bulle-noms");
-  bulle.addEventListener("mousedown", (e) => e.preventDefault()); // toucher la bulle ne retire pas le curseur du texte
+  // Toucher la bulle ne retire pas le curseur du texte (le clavier mobile reste ouvert)
+  bulle.addEventListener("pointerdown", (e) => e.preventDefault());
+  bulle.addEventListener("mousedown", (e) => e.preventDefault());
   bulle.addEventListener("click", (e) => {
     const b = e.target.closest("[data-fiche]");
     if (b) ouvrir(b.dataset.fiche);
@@ -105,6 +108,17 @@ export function initialiserSurlignage() {
   document.addEventListener("pointerdown", (e) => {
     if (!bulle.hidden && !bulle.contains(e.target) && !e.target.closest?.(".texte")) cacherBulle();
   });
+  // Échap ferme la bulle (sans toucher à la zone de texte)
+  document.addEventListener("keydown", (e) => {
+    if (bulleSur && e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      cacherBulle();
+    }
+  }, true);
+  window.addEventListener("resize", () => { if (bulleSur) placerBulle(); });
+  window.visualViewport?.addEventListener("resize", () => { if (bulleSur) placerBulle(); });
+  window.visualViewport?.addEventListener("scroll", () => { if (bulleSur) placerBulle(); });
 }
 
 // Prévoit la mise à jour d'un calque (ou des deux, sans « copie »)
@@ -304,8 +318,10 @@ function remplirLigne(copie, ligne, texte, nomsTrouves, numero, fautes = fautesA
 // la place est prise au centième de pixel près : voir placeDuTexte dans outils.js)
 function copierStyles(copie) {
   const { zone, calque, interieur } = copie;
+  const place = placeDuTexte(zone);
+  if (!place) return;
   const cs = getComputedStyle(zone);
-  const { gauche, haut, largeur, hauteur } = placeDuTexte(zone);
+  const { gauche, haut, largeur, hauteur } = place;
   const styles = STYLES_DU_TEXTE.map((p) => cs[p]).join("|") + "|" + [gauche, haut, largeur, hauteur].join("|");
   if (styles === copie.styles) return;
   copie.styles = styles;
@@ -383,7 +399,8 @@ function marqueSous(copie, x, y) {
   return null;
 }
 
-// La bulle se place juste sous le nom (ou au-dessus, s'il est tout en bas)
+// La bulle se place juste sous le nom (ou au-dessus, s'il n'y a pas la place,
+// en tenant compte du clavier virtuel via visualViewport)
 function placerBulle() {
   const bulle = $("bulle-noms");
   const { copie, marque, morceau } = bulleSur;
@@ -391,13 +408,29 @@ function placerBulle() {
   const r = rects[morceau] || rects[0];
   // Le nom est sorti de la partie visible de son texte (texte qui défile) : la bulle disparaît
   const vue = copie.calque.getBoundingClientRect();
-  if (!r || r.bottom < vue.top || r.top > vue.bottom) { cacherBulle(); return; }
+  const vv = window.visualViewport;
+  const hautEcran = vv ? vv.offsetTop : 0;
+  const basEcran = vv ? vv.offsetTop + vv.height : window.innerHeight;
+  const gaucheEcran = vv ? vv.offsetLeft : 0;
+  const droiteEcran = vv ? vv.offsetLeft + vv.width : document.documentElement.clientWidth;
+  if (!r || r.bottom < Math.max(vue.top, hautEcran) || r.top > Math.min(vue.bottom, basEcran)) {
+    cacherBulle();
+    return;
+  }
   const boite = $("zone-ecriture").getBoundingClientRect();
+  const hautVisible = Math.max(boite.top, hautEcran);
+  const basVisible = Math.min(boite.bottom, basEcran);
+  const droiteVisible = Math.min(boite.right, droiteEcran);
+  const gaucheVisible = Math.max(boite.left, gaucheEcran);
   const largeur = bulle.offsetWidth, hauteur = bulle.offsetHeight;
-  let haut = r.bottom - boite.top + 6;
-  if (haut + hauteur > boite.height - 8) haut = r.top - boite.top - hauteur - 6;
-  bulle.style.top = Math.max(4, haut) + "px";
-  bulle.style.left = Math.max(8, Math.min(r.left - boite.left, boite.width - largeur - 8)) + "px";
+  let y = r.bottom + 6;
+  if (y + hauteur > basVisible - 8 && r.top - hauteur - 6 >= hautVisible + 4) {
+    y = r.top - hauteur - 6;
+  }
+  const haut = Math.max(4, Math.min(y - boite.top, basVisible - boite.top - hauteur - 8));
+  const gauche = Math.max(gaucheVisible - boite.left + 8, Math.min(r.left - boite.left, droiteVisible - boite.left - largeur - 8));
+  bulle.style.top = Math.round(haut) + "px";
+  bulle.style.left = Math.round(gauche) + "px";
 }
 
 export function cacherBulle() {

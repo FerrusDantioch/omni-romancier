@@ -15,7 +15,7 @@
 // revienne dans la barre pour se mettre à jour : en attendant, ils sont seulement estompés ou cachés.
 // =====================================================================
 
-import { el, nombre, pluriel, ecrireTexte, STYLES_DU_TEXTE, placeDuTexte } from "./outils.js";
+import { el, nombre, pluriel, ecrireTexte, STYLES_DU_TEXTE, placeDuTexte, lireAvecMigration } from "./outils.js";
 import { masquerSauts } from "../commun/saut-de-page.js";
 import { confirmer, informer } from "./dialogues.js";
 import { etat, ecouter, scenesDansLOrdre, trouverChapitre } from "./etat.js";
@@ -24,7 +24,8 @@ import {
 } from "./editeur.js";
 import { basculerVolet } from "./panneau.js";
 
-const CLE_OPTIONS = "atelier-recherche"; // les cases cochées, gardées sur cet appareil
+const CLE_OPTIONS = "omni-romancier-recherche"; // les cases cochées, gardées sur cet appareil
+const ANCIENNE_CLE_OPTIONS = "atelier-recherche";
 const MAX_LISTE = 300;     // passages détaillés dans la liste (les suivants sont seulement comptés)
 const DELAI = 150;         // on cherche un instant après la dernière touche (pas à chaque touche)
 const MAX_HISTORIQUE = 10; // remplacements que l'on peut encore annuler, du plus récent au plus ancien
@@ -61,7 +62,7 @@ const MAC = /Mac|iPhone|iPad|iPod/.test(navigator.platform || navigator.userAgen
 // =====================================================================
 
 export function initialiserRemplacement() {
-  try { Object.assign(options, JSON.parse(localStorage.getItem(CLE_OPTIONS)) || {}); } catch { /* options par défaut */ }
+  try { Object.assign(options, JSON.parse(lireAvecMigration(CLE_OPTIONS, ANCIENNE_CLE_OPTIONS)) || {}); } catch { /* options par défaut */ }
   for (const [id, cle] of [["br-majuscules", "majuscules"], ["br-mot", "mot"], ["br-redige", "redige"], ["br-notes", "notes"]]) {
     const caseACocher = $(id);
     caseACocher.checked = !!options[cle];
@@ -231,10 +232,9 @@ function fermer({ versLeTexte = true } = {}) {
 // Chercher
 // =====================================================================
 
-// Ce que l'on cherche, et ce que l'on met à la place. Les espaces au début et à la fin ne comptent pas
-// (le clavier d'un téléphone en ajoute souvent une après un mot), sauf s'il n'y a que des espaces.
-const requete = () => { const q = $("br-chercher").value; return q.trim() || q; };
-const remplacant = () => { const p = $("br-par").value; return p.trim() || p; };
+// Ce que l'on cherche, et ce que l'on met à la place (les espaces intentionnels sont gardés)
+const requete = () => $("br-chercher").value;
+const remplacant = () => $("br-par").value;
 
 // Majuscules indifférentes (sauf « Majuscules exactes ») ; les accents, eux, comptent toujours
 // (« a » ne trouve pas « à »).
@@ -446,7 +446,7 @@ async function toutRemplacer() {
     titre: par ? "Tout remplacer ?" : "Tout supprimer ?",
     message: [
       par ? `« ${q} » sera remplacé par « ${par} » : ${combien}.` : `« ${q} » sera supprimé : ${combien}.`,
-      "Vous pourrez l'annuler juste après : bouton « Annuler le remplacement ».",
+      "Tu pourras l'annuler juste après : bouton « Annuler le remplacement ».",
     ],
     ok: par ? "Tout remplacer" : "Tout supprimer",
     danger: !par,
@@ -505,12 +505,12 @@ async function ecrire(changements) {
     return false;
   }
   if (reponse === "attente") {
-    informer("Du texte attend encore d'être enregistré : rien n'a été remplacé. Réessayez dans un instant ; "
-      + "si cela dure, exportez vos données puis rechargez la page.", { erreur: true, duree: 8000 });
+    informer("Du texte attend encore d'être enregistré : rien n'a été remplacé. Réessaie dans un instant ; "
+      + "si cela dure, exporte tes données puis recharge la page.", { erreur: true, duree: 8000 });
     return false;
   }
   if (reponse === "change") {
-    informer("Le texte vient de changer : rien n'a été remplacé. Réessayez.", { erreur: true });
+    informer("Le texte vient de changer : rien n'a été remplacé. Réessaie.", { erreur: true });
     chercher();
     return false;
   }
@@ -584,10 +584,10 @@ function majEtat() {
   const n = resultats.length;
   ecrireTexte($("br-compte"), !motif ? "" : n ? `${actuel < 0 ? "–" : actuel + 1} / ${nombre(n)}` : "0");
   let message;
-  if (perime) message = "Le texte a changé : la recherche se met à jour dès que vous revenez dans cette barre.";
+  if (perime) message = "Le texte a changé : la recherche se met à jour dès que tu reviens dans cette barre.";
   else if (dernierMessage) message = dernierMessage;
-  else if (!options.redige && !options.notes) message = "Cochez « Texte rédigé » ou « Notes » : c'est là que l'on cherche.";
-  else if (!motif) message = "Tapez un mot : il est cherché dans toutes les scènes du roman.";
+  else if (!options.redige && !options.notes) message = "Coche « Texte rédigé » ou « Notes » : c'est là que l'on cherche.";
+  else if (!motif) message = "Tape un mot : il est cherché dans toutes les scènes du roman.";
   else if (!n) message = "Aucun passage trouvé.";
   else message = `${pluriel(n, "passage")} dans ${pluriel(new Set(resultats.map((r) => r.scene.id)).size, "scène")}.`;
   ecrireTexte($("br-message"), message);
@@ -733,8 +733,10 @@ function cacherCalque(c) {
 
 // Le calque prend exactement la place, la police et les marges de son texte (comme dans surlignage.js)
 function copierStyles(c) {
+  const place = placeDuTexte(c.zone);
+  if (!place) return;
   const cs = getComputedStyle(c.zone);
-  const { gauche, haut, largeur, hauteur } = placeDuTexte(c.zone);
+  const { gauche, haut, largeur, hauteur } = place;
   const styles = STYLES_DU_TEXTE.map((p) => cs[p]).join("|") + "|" + [gauche, haut, largeur, hauteur].join("|");
   if (styles === c.styles) return;
   c.styles = styles;

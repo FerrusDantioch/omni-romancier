@@ -1,4 +1,11 @@
+Polices incluses dans Omni-Romancier (fichiers fonts/oxanium.woff2,
+fonts/literata.woff2, fonts/literata-italique.woff2 et fonts/jetbrains-mono.woff2).
+Elles gardent leur propre licence, la SIL Open Font License 1.1, dont le texte
+complet figure ci-dessous.
+
 Copyright 2019 The Oxanium Project Authors (https://github.com/sevmeyer/oxanium)
+Copyright 2017 The Literata Project Authors (https://github.com/googlefonts/literata)
+Copyright 2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
@@ -73,8 +80,8 @@ permission.
 
 5) The Font Software, modified or unmodified, in part or in whole,
 must be distributed entirely under this license, and must not be
-distributed under any other license. The requirement for fonts to
-remain under this license does not apply to any document created
+distributed under any other license. The requirement for fonts to remain
+under this license does not apply to any document created
 using the Font Software.
 
 TERMINATION
@@ -89,5 +96,5 @@ OF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE
 COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
 INCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL
 DAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-FROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM
+FROM, OUT OF OR INABILITY TO USE THE FONT SOFTWARE OR FROM
 OTHER DEALINGS IN THE FONT SOFTWARE.

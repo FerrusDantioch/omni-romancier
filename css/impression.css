@@ -6,9 +6,6 @@
    de page sont réglés au moment de l'export (voir js/export-pdf.js).
    ===================================================================== */
 
-/* À l'écran, le livre préparé reste invisible */
-#impression{ display:none; }
-
 @media print{
   /* Seul le livre est imprimé : l'interface (sombre) disparaît */
   html.impression-livre,

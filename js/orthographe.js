@@ -16,7 +16,7 @@ import { estSautDePage } from "../commun/saut-de-page.js";
 import { creerCorrecteur } from "../correcteur/correcteur.js";
 import { ouvrirBulle, fermerBulle, replacerBulle } from "../correcteur/bulle.js";
 import { afficherDictionnaire } from "../correcteur/liste.js";
-import { el } from "./outils.js";
+import { el, lireAvecMigration } from "./outils.js";
 import { etat, ecouter } from "./etat.js";
 
 const DELAI = 500;          // ms sans frappe avant de vérifier
@@ -24,12 +24,22 @@ const MEMOIRE_MAX = 20000;  // lignes gardées en mémoire (au-delà, on recomme
 const LETTRE = /\p{L}/u;
 
 // Le réglage et le dictionnaire personnel, dans le navigateur (préfixe des réglages d'Omni-Romancier)
+const NOUVEAU_PREFIXE = "omni-romancier-";
+const ANCIEN_PREFIXE = "atelier-";
 const stockage = {
   lire(nom, defaut) {
-    try { const v = localStorage.getItem("atelier-" + nom); return v === null ? defaut : JSON.parse(v); } catch { return defaut; }
+    try {
+      const v = lireAvecMigration(NOUVEAU_PREFIXE + nom, ANCIEN_PREFIXE + nom);
+      return v === null ? defaut : JSON.parse(v);
+    } catch {
+      return defaut;
+    }
   },
   ecrire(nom, valeur) {
-    try { localStorage.setItem("atelier-" + nom, JSON.stringify(valeur)); } catch { /* stockage plein ou interdit : tant pis */ }
+    try {
+      localStorage.setItem(NOUVEAU_PREFIXE + nom, JSON.stringify(valeur));
+      localStorage.removeItem(ANCIEN_PREFIXE + nom);
+    } catch { /* stockage plein ou interdit : tant pis */ }
   },
 };
 
@@ -173,7 +183,7 @@ function ouvrirReglages() {
       el("div", { class: "dialogue-corps" },
         el("label", { class: "case" }, caseActive, el("span", {}, "Souligner les fautes d'orthographe")),
         el("p", { class: "discret petit" },
-          "Touchez un mot souligné pour voir les corrections. Les noms de vos fiches ne sont jamais soulignés. "
+          "Touche un mot souligné pour voir les corrections. Les noms de tes fiches ne sont jamais soulignés. "
           + "Tout se passe sur cet appareil, même sans connexion."),
         el("h3", { class: "etiquette" }, "Dictionnaire personnel"),
         liste,

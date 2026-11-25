@@ -14,7 +14,9 @@ import {
   initialiserEditeur, preparerEditeur, fermerEditeur, recupererSecours, effacerTousLesSecours, sauverMaintenant,
   toutEnregistrer,
 } from "./editeur.js";
-import { initialiserPanneau, preparerPanneau, fermerPanneau, sauverFiche } from "./panneau.js";
+import {
+  initialiserPanneau, preparerPanneau, fermerPanneau, sauverFiche, recupererSecoursFiches, effacerTousLesSecoursFiches,
+} from "./panneau.js";
 import { initialiserRecherche, fermerRecherche } from "./recherche.js";
 import { initialiserRemplacement, fermerRemplacement } from "./remplacer.js";
 import { initialiserAnnulation } from "./annulation.js";
@@ -26,7 +28,7 @@ import { initialiserSurlignage } from "./surlignage.js";
 import { initialiserFrise, montrerFrise, revenirDeLaFrise, oublierFrise, friseAffichee } from "./frise.js";
 
 // Numéro de version affiché dans « À propos »
-export const VERSION = "1.12.1"; // (à changer aussi dans sw.js)
+export const VERSION = self.CONFIG_APP?.version || "1.13.0";
 
 // Tous les fichiers de l'application se sont chargés ensemble (voir alerteDemarrage dans index.html)
 window.applicationChargee = true;
@@ -68,7 +70,14 @@ async function suivreAdresse() {
   fermerRemplacement();
 
   if (page === "roman" && id) {
-    const romanId = decodeURIComponent(id);
+    let romanId;
+    try {
+      romanId = decodeURIComponent(id);
+    } catch {
+      informer("Adresse de roman invalide.", { erreur: true });
+      location.hash = "bibliotheque";
+      return;
+    }
     const dejaOuvert = etat.roman && etat.roman.id === romanId
       && (!document.getElementById("vue-roman").hidden || friseAffichee());
     if (!dejaOuvert && !await ouvrirRoman(romanId)) return;
@@ -101,6 +110,7 @@ async function ouvrirRoman(romanId) {
   await fermerPanneau();
   await fermerEditeur();
   await recupererSecours(); // frappes restées en secours (enregistrement qui avait échoué) : on les remet d'abord
+  await recupererSecoursFiches();
   const roman = await chargerRoman(romanId);
   if (!roman) {
     informer("Ce roman n'existe plus.", { erreur: true });
@@ -121,7 +131,7 @@ async function ouvrirRoman(romanId) {
 function signalerErreur(erreur) {
   console.error(erreur);
   const message = (erreur && erreur.message) || String(erreur);
-  informer(`Un problème est survenu : ${message}. Si cela se répète, exportez vos données puis rechargez la page.`,
+  informer(`Un problème est survenu : ${message}. Si cela se répète, exporte tes données puis recharge la page.`,
     { erreur: true, duree: 12000 });
 }
 window.addEventListener("unhandledrejection", (e) => signalerErreur(e.reason));
@@ -129,7 +139,10 @@ window.addEventListener("error", (e) => signalerErreur(e.error || e.message));
 
 // Démarrage
 async function demarrer() {
-  document.getElementById("numero-version").textContent = VERSION;
+  for (const id of ["numero-version", "apropos-version"]) {
+    const elVersion = document.getElementById(id);
+    if (elVersion) elVersion.textContent = VERSION;
+  }
 
   // Tous les boutons qui portent data-aller="..." changent de page
   document.addEventListener("click", (e) => {
@@ -152,11 +165,13 @@ async function demarrer() {
 
   // Récupère d'éventuelles frappes non enregistrées (onglet fermé en pleine phrase…)
   await recupererSecours();
+  await recupererSecoursFiches();
 
   initialiserBibliotheque({ quandCaChange: mettreAJourEtat });
   initialiserSauvegarde({
     quandImporte: () => enOrdre(async () => {
       effacerTousLesSecours();
+      effacerTousLesSecoursFiches();
       fermerRoman();               // force le rechargement du roman affiché
       await suivreAdresse();
     }),
@@ -164,7 +179,7 @@ async function demarrer() {
     // Renvoie false si quelque chose n'a pas pu être enregistré.
     avantExporter: async () => {
       const texteOk = await toutEnregistrer();
-      const ficheOk = await sauverFiche();
+      const ficheOk = (await sauverFiche()) && (await recupererSecoursFiches());
       return texteOk && ficheOk;
     },
   });

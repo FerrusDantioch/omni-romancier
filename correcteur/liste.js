@@ -74,7 +74,7 @@ export function afficherDictionnaire(conteneur, correcteur, classes = {}) {
   function afficher() {
     const mots = correcteur.mots();
     compte.textContent = mots.length === 0
-      ? 'Aucun mot pour l’instant. Touchez un mot souligné, puis « Ajouter au dictionnaire » : il ne sera plus jamais souligné.'
+      ? 'Aucun mot pour l’instant. Touche un mot souligné, puis « Ajouter au dictionnaire » : il ne sera plus jamais souligné.'
       : `${mots.length.toLocaleString('fr-FR')} mot${mots.length > 1 ? 's' : ''}, jamais soulignés :`;
     liste.replaceChildren(...mots.map((mot) => {
       const ligne = document.createElement('li');

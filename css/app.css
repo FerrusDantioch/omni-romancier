@@ -21,6 +21,21 @@ h3{ font-size:1.15rem; font-weight:700; }
 p{ margin:0; }
 a{ color:var(--halo); text-underline-offset:3px; }
 [hidden]{ display:none !important; }
+#impression{ display:none; }
+
+/* Lien d'évitement clavier */
+.lien-evitement{
+  position:absolute; left:-9999px; top:auto; width:1px; height:1px; overflow:hidden;
+}
+.lien-evitement:focus{
+  position:fixed; left:var(--esp-3); top:var(--esp-3); z-index:200;
+  width:auto; height:auto; overflow:visible;
+  padding:10px 16px; border-radius:var(--arrondi-bouton);
+  background:var(--omni); color:var(--sur-accent);
+  font:700 .95rem var(--f-titre); text-decoration:none;
+  box-shadow:var(--ombre);
+}
+#contenu-principal:focus{ outline:none; }
 
 /* Contour visible au clavier (pour savoir où l'on est) */
 a:focus-visible, button:focus-visible, input:focus-visible,
@@ -49,6 +64,7 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
 }
 .marque{
   display:flex; align-items:center; gap:10px;
+  min-height:44px;
   color:var(--texte); text-decoration:none;
   font-family:var(--f-titre); font-weight:800; letter-spacing:.04em;
   background:none; border:0; padding:0; cursor:pointer; font-size:1rem;
@@ -57,16 +73,20 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
 .marque small{ display:block; font-weight:500; font-size:.72rem; letter-spacing:.14em; text-transform:uppercase; color:var(--discret); }
 .nav{ display:flex; gap:var(--esp-1) var(--esp-4); margin-left:auto; flex-wrap:wrap; font-family:var(--f-titre); font-size:.85rem; }
 .nav button{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:44px; min-height:44px;
   background:none; border:0; cursor:pointer;
   color:var(--discret); font:inherit;
   letter-spacing:.14em; text-transform:uppercase;
-  padding:6px 2px; border-bottom:2px solid transparent;
+  padding:8px 6px; border-bottom:2px solid transparent;
 }
 .nav button:hover{ color:var(--texte); }
 .nav button[aria-current="page"]{ color:var(--texte); border-bottom-color:var(--univers); }
 
 /* ---------- Boutons ---------- */
 .bouton{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:44px; min-height:44px;
   font:700 .95rem var(--f-titre); letter-spacing:.04em;
   background:var(--omni); color:var(--sur-accent);
   border:0; border-radius:var(--arrondi-bouton);
@@ -75,10 +95,12 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
 }
 .bouton:hover{ background:var(--halo); }
 .petit-bouton{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:44px; min-height:44px;
   font:600 .85rem var(--f-titre);
   background:none; color:var(--halo);
   border:var(--filet) solid var(--trait); border-radius:var(--arrondi-petit);
-  padding:6px 12px; cursor:pointer; text-decoration:none;
+  padding:8px 14px; cursor:pointer; text-decoration:none;
   transition:border-color var(--duree);
 }
 .petit-bouton:hover{ border-color:var(--omni); }
@@ -113,6 +135,7 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
 
 /* Liste à puces en losange */
 .losanges{ list-style:none; margin:0; padding:0; display:grid; gap:6px; }
+.losanges-omni{ --c:var(--omni); }
 .losanges li{ position:relative; padding-left:20px; }
 .losanges li::before{
   content:""; position:absolute; left:1px; top:.62em; width:8px; height:8px;
@@ -137,6 +160,8 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
 .medaillon img{ width:100%; height:100%; object-fit:cover; display:block; }
 .apropos p{ color:var(--discret); }
 .apropos .version{ font-family:var(--f-des); color:var(--halo); font-size:.9rem; }
+.apropos-maj{ margin-top:var(--esp-2); }
+.apropos-univers > .etiquette{ margin-bottom:var(--esp-3); }
 .conception{ display:grid; gap:var(--esp-2); }
 .conception strong{ color:var(--texte); font-weight:600; }
 .lien-portfolio{ font-weight:600; } /* (le lien vers le portfolio de l'Omni-système) */
@@ -144,10 +169,12 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
 /* Démo des couleurs d'univers (page À propos) */
 .palette{ display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:var(--esp-3); }
 .palette .carte{ padding:var(--esp-4); gap:var(--esp-2); }
+.palette .statut{ --c:inherit; justify-self:start; }
+.roman-carte h2, .palette h2{ font-size:1.15rem; }
 
 
 /* ---------- Boutons : variantes ---------- */
-.bouton-petit{ font-size:.85rem; padding:7px 14px; border-radius:var(--arrondi-petit); text-decoration:none; display:inline-block; }
+.bouton-petit{ font-size:.85rem; padding:8px 14px; border-radius:var(--arrondi-petit); text-decoration:none; }
 .bouton-danger{ background:var(--danger); color:var(--sur-accent); }
 .bouton-danger:hover{ background:color-mix(in srgb, var(--danger) 75%, white); }
 .petit{ font-size:.85rem; }
@@ -290,7 +317,9 @@ body.mode-ecriture main{ flex:1; min-height:0; }
 
 /* Petit bouton qui ressemble à un lien */
 .lien-discret{
-  background:none; border:0; padding:0; cursor:pointer;
+  display:inline-flex; align-items:center;
+  min-width:44px; min-height:44px;
+  background:none; border:0; padding:6px 2px; cursor:pointer;
   font:inherit; color:var(--discret);
   text-decoration:underline dotted; text-underline-offset:3px;
 }
@@ -304,12 +333,12 @@ body.mode-ecriture main{ flex:1; min-height:0; }
   padding:var(--esp-4);
   display:flex; flex-direction:column; gap:var(--esp-3);
 }
-.retour{ text-decoration:none; color:var(--discret); }
+.retour{ display:inline-flex; align-items:center; min-height:44px; text-decoration:none; color:var(--discret); }
 .retour:hover{ color:var(--texte); }
 .plan-roman{ display:grid; gap:6px; justify-items:start; }
 .plan-roman h1{ font-size:1.3rem; }
 .plan-roman .lien-discret{ font-size:.82rem; } /* « Frise des événements », « Rechercher et remplacer », « Exporter » */
-.plan-liens{ display:flex; flex-wrap:wrap; gap:2px var(--esp-3); }
+.plan-liens{ display:flex; flex-wrap:wrap; gap:0 var(--esp-3); }
 .plan .pointilles{ margin:0; }
 /* La liste défile seule : le titre, les compteurs et la session restent toujours visibles */
 #plan-liste{ flex:1 1 auto; min-height:0; overflow-y:auto; margin:0 calc(-1 * var(--esp-2)); padding:2px var(--esp-2); }
@@ -364,19 +393,20 @@ body.mode-ecriture main{ flex:1; min-height:0; }
   box-shadow:inset 3px 0 0 var(--univers);
 }
 .plan-ouvrir{
-  flex:1; min-width:0; display:flex; align-items:center; gap:6px;
+  flex:1; min-width:0; min-height:44px; display:flex; align-items:center; gap:6px;
   background:none; border:0; cursor:pointer; text-align:left;
   color:var(--texte); font:.92rem/1.5 var(--f-texte);
-  padding:4px 0 4px 8px;
+  padding:6px 0 6px 8px;
 }
 .plan-mode{
   flex:none; font:600 .62rem var(--f-titre); letter-spacing:.08em; text-transform:uppercase;
   color:var(--discret); border:var(--filet) dashed var(--trait); border-radius:var(--arrondi-pilule); padding:0 6px;
 }
 .ajout-scene{
+  display:inline-flex; align-items:center; min-height:44px;
   background:none; border:0; cursor:pointer;
   color:var(--discret); font:600 .78rem var(--f-titre);
-  padding:4px 0 0 var(--esp-4);
+  padding:4px 0 4px var(--esp-4);
 }
 .ajout-scene:hover{ color:var(--texte); }
 .ajout-chapitre{ justify-self:start; align-self:flex-start; }
@@ -384,7 +414,7 @@ body.mode-ecriture main{ flex:1; min-height:0; }
 /* Petits boutons ↑ ↓ ✎ ✕ : apparaissent au survol ou au clavier, par-dessus la ligne */
 .plan-actions{
   position:absolute; right:0; top:50%; transform:translateY(-50%);
-  display:flex; gap:1px;
+  display:flex; gap:6px; padding:2px;
   background:var(--table-haute); border:var(--filet) solid var(--trait); border-radius:var(--arrondi-petit);
   opacity:0; pointer-events:none;
   transition:opacity var(--duree);
@@ -394,7 +424,7 @@ body.mode-ecriture main{ flex:1; min-height:0; }
   opacity:1; pointer-events:auto;
 }
 .plan-action{
-  width:26px; height:24px; display:grid; place-items:center;
+  min-width:44px; min-height:44px; width:44px; height:44px; display:grid; place-items:center;
   background:none; border:0; border-radius:6px; cursor:pointer;
   color:var(--discret); font:600 .85rem var(--f-titre);
 }
@@ -428,16 +458,17 @@ body.mode-ecriture main{ flex:1; min-height:0; }
 /* Interrupteur Notes / Rédigé (repris du portfolio) */
 .modes{ display:inline-flex; border:var(--filet) solid var(--trait); border-radius:var(--arrondi-pilule); padding:3px; gap:2px; }
 .modes button{
+  min-width:44px; min-height:44px;
   font:600 .85rem var(--f-titre); color:var(--discret);
   background:none; border:0; border-radius:var(--arrondi-pilule);
-  padding:5px 12px; cursor:pointer;
+  padding:6px 14px; cursor:pointer;
 }
 .modes button:hover{ color:var(--texte); }
 .modes button[aria-pressed="true"]{ background:var(--omni); color:var(--sur-accent); }
 
 .outils-format{ display:inline-flex; gap:4px; }
 .outils-format button{
-  min-width:34px; height:32px; padding:0 8px;
+  min-width:44px; min-height:44px; padding:0 10px;
   background:none; color:var(--texte);
   border:var(--filet) solid var(--trait); border-radius:var(--arrondi-petit);
   font:1rem var(--f-texte); cursor:pointer;
@@ -445,12 +476,7 @@ body.mode-ecriture main{ flex:1; min-height:0; }
 .outils-format button.mono{ font:600 .8rem var(--f-des); }
 .outils-format button:hover{ border-color:var(--omni); }
 .outils-format button.avec-libelle{ font:600 .8rem var(--f-titre); white-space:nowrap; }
-#bouton-imprimer{ white-space:nowrap; }
-/* Au doigt : des boutons de mise en forme assez grands */
-@media (pointer:coarse){
-  .outils-format button{ min-width:40px; height:40px; }
-  #bouton-imprimer{ min-height:40px; }
-}
+#bouton-imprimer{ white-space:nowrap; min-height:44px; }
 .vue-ecriture[data-mode="redige"] .seulement-notes{ display:none; }
 /* Côte à côte : le bouton puce garde sa place (invisible) quand on écrit dans le texte rédigé,
    pour que la barre d'outils ne change pas de forme à chaque clic d'une colonne à l'autre */
@@ -576,14 +602,13 @@ body.concentration .bulle-noms{ display:none; }
   animation:apparition var(--duree) ease-out;
 }
 .bulle-fiche{
-  display:flex; align-items:baseline; gap:var(--esp-2); min-width:0;
+  display:flex; align-items:center; gap:var(--esp-2); min-width:0; min-height:44px;
   background:none; border:0; border-radius:6px; cursor:pointer;
-  padding:6px 10px; text-align:left; color:var(--texte); font:600 .92rem var(--f-titre);
+  padding:8px 12px; text-align:left; color:var(--texte); font:600 .92rem var(--f-titre);
 }
 .bulle-fiche:hover{ background:var(--trait); }
 .bulle-categorie{ flex:none; font:600 .64rem var(--f-titre); letter-spacing:.08em; text-transform:uppercase; color:var(--discret); }
 .bulle-nom{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-@media (pointer:coarse){ .bulle-fiche{ min-height:40px; align-items:center; } }
 
 /* ---------- Rechercher et remplacer : la barre au-dessus du texte (js/remplacer.js) ---------- */
 .barre-recherche{
@@ -601,14 +626,14 @@ body.concentration .bulle-noms{ display:none; }
 .br-ligne:first-child .br-saisie{ flex-basis:auto; }
 .br-compte{ flex:none; min-width:4em; text-align:center; font-size:.78rem; color:var(--discret); }
 .br-bouton{
-  flex:none; width:34px; height:32px; display:grid; place-items:center;
+  flex:none; min-width:44px; min-height:44px; width:44px; height:44px; display:grid; place-items:center;
   background:none; color:var(--texte); cursor:pointer;
   border:var(--filet) solid var(--trait); border-radius:var(--arrondi-petit);
   font:600 .95rem var(--f-titre);
 }
 .br-bouton:hover:not(:disabled){ border-color:var(--omni); }
 .br-actions{ flex:none; display:flex; gap:var(--esp-2); }
-.br-actions .petit-bouton{ padding:5px 12px; white-space:nowrap; }
+.br-actions .petit-bouton{ min-height:44px; padding:6px 12px; white-space:nowrap; }
 .barre-recherche button:disabled{ opacity:.4; cursor:default; }
 .barre-recherche .petit-bouton:disabled:hover{ border-color:var(--trait); }
 .br-options{ display:flex; flex-wrap:wrap; gap:2px var(--esp-4); }
@@ -633,9 +658,9 @@ body.concentration .bulle-noms{ display:none; }
 .br-nombre{ flex:none; }
 .br-passages{ list-style:none; margin:2px 0 0; padding:0; display:grid; grid-template-columns:minmax(0,1fr); gap:1px; }
 .br-resultat{
-  width:100%; display:flex; align-items:baseline; gap:var(--esp-2);
+  width:100%; min-height:44px; display:flex; align-items:center; gap:var(--esp-2);
   background:none; border:0; border-radius:6px; cursor:pointer;
-  padding:4px 8px; text-align:left;
+  padding:8px; text-align:left;
   color:var(--ecriture-texte); font:.9rem/1.5 var(--f-texte);
 }
 .br-resultat:hover{ background:var(--table-haute); }
@@ -651,10 +676,6 @@ body.concentration .bulle-noms{ display:none; }
 }
 .br-extrait del{ color:var(--discret); text-decoration:line-through; } /* l'aperçu : l'ancien texte barré, puis le nouveau */
 .br-plus{ padding:0 8px; }
-@media (pointer:coarse){
-  .br-bouton{ width:40px; height:38px; }
-  .br-resultat{ min-height:40px; align-items:center; }
-}
 /* Petit écran : la barre se fait plus compacte (le texte garde de la place) */
 @media (max-width:760px){
   .barre-recherche{ padding:var(--esp-2) var(--esp-3); gap:6px; }
@@ -727,8 +748,8 @@ body.concentration .barre-recherche, body.concentration .trouvailles{ display:no
 }
 .epinglee-tete{ display:flex; justify-content:space-between; align-items:center; gap:var(--esp-2); font-size:.78rem; }
 .epinglee-titre-seul{
-  display:block; width:100%; text-align:left; margin-top:4px;
-  background:none; border:0; padding:0; cursor:pointer;
+  display:flex; align-items:center; width:100%; min-height:44px; text-align:left; margin-top:4px;
+  background:none; border:0; padding:6px 0; cursor:pointer;
   font:700 1rem var(--f-titre); color:var(--texte);
 }
 
@@ -739,7 +760,7 @@ body.concentration .barre-recherche, body.concentration .trouvailles{ display:no
   border-bottom:var(--filet) solid var(--trait);
 }
 .onglets button{
-  flex:1 1 auto; min-width:0;
+  flex:1 1 auto; min-width:0; min-height:44px;
   background:none; border:0; cursor:pointer;
   border-bottom:2px solid transparent; margin-bottom:-1px;
   padding:8px 4px;
@@ -757,9 +778,9 @@ body.concentration .barre-recherche, body.concentration .trouvailles{ display:no
 /* Liste des fiches d'un onglet */
 .fiches{ list-style:none; margin:0; padding:0; display:grid; gap:2px; width:100%; }
 .fiche-item{
-  width:100%; display:flex; align-items:baseline; gap:var(--esp-2);
+  width:100%; min-height:44px; display:flex; align-items:center; gap:var(--esp-2);
   background:none; border:0; border-radius:var(--arrondi-petit); cursor:pointer;
-  padding:7px var(--esp-2); text-align:left; color:var(--texte); font:inherit;
+  padding:8px var(--esp-2); text-align:left; color:var(--texte); font:inherit;
 }
 .fiche-item:hover{ background:var(--table-haute); }
 .fiche-item::before{ content:""; flex:none; width:7px; height:7px; transform:rotate(45deg) translateY(-1px); background:var(--univers); }
@@ -775,7 +796,7 @@ body.concentration .barre-recherche, body.concentration .trouvailles{ display:no
   width:7px; height:7px; transform:rotate(45deg); background:var(--univers);
 }
 .frise-ouvrir{
-  flex:1; min-width:0; display:grid; gap:1px;
+  flex:1; min-width:0; min-height:44px; display:grid; gap:1px;
   background:none; border:0; border-radius:var(--arrondi-petit); cursor:pointer;
   padding:6px var(--esp-2); text-align:left; color:var(--texte); font:inherit;
 }
@@ -792,7 +813,8 @@ body.concentration .barre-recherche, body.concentration .trouvailles{ display:no
 /* Une fiche en lecture */
 .fiche{ display:grid; gap:var(--esp-3); }
 .lien-retour{
-  justify-self:start; background:none; border:0; padding:0; cursor:pointer;
+  display:inline-flex; align-items:center; min-height:44px;
+  justify-self:start; background:none; border:0; padding:6px 0; cursor:pointer;
   font:600 .75rem var(--f-titre); letter-spacing:.12em; text-transform:uppercase; color:var(--discret);
 }
 .lien-retour:hover{ color:var(--texte); }
@@ -808,10 +830,11 @@ body.concentration .barre-recherche, body.concentration .trouvailles{ display:no
 .pastilles{ display:flex; flex-wrap:wrap; gap:6px; }
 .pastille{
   --c:var(--univers);
+  display:inline-flex; align-items:center; min-width:44px; min-height:44px;
   font:600 .78rem var(--f-titre); cursor:pointer;
   color:var(--texte); background:none;
   border:var(--filet) solid color-mix(in srgb, var(--c) 55%, transparent); border-radius:var(--arrondi-pilule);
-  padding:3px 10px;
+  padding:6px 12px;
 }
 .pastille:hover{ background:color-mix(in srgb, var(--c) 14%, transparent); }
 .suivre-frise{ justify-self:start; font-size:.8rem; }
@@ -827,18 +850,17 @@ body.concentration .barre-recherche, body.concentration .trouvailles{ display:no
   border-left:var(--filet) dashed var(--trait); display:grid; gap:1px;
 }
 .scene-nommee{
-  width:100%; display:flex; align-items:baseline; gap:var(--esp-2);
+  width:100%; min-height:44px; display:flex; align-items:center; gap:var(--esp-2);
   background:none; border:0; border-radius:6px; cursor:pointer; text-align:left;
-  padding:4px 8px; color:var(--texte); font:.9rem/1.4 var(--f-texte);
+  padding:8px; color:var(--texte); font:.9rem/1.4 var(--f-texte);
 }
 .scene-nommee:hover{ background:var(--table-haute); }
 /* La scène ouverte (la toucher va au passage suivant) */
 .scene-nommee.ici{ background:color-mix(in srgb, var(--univers) 12%, transparent); box-shadow:inset 3px 0 0 var(--univers); }
 .scene-nommee-titre{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .scene-nommee-nombre{ flex:none; font-size:.75rem; color:var(--discret); }
-@media (pointer:coarse){ .scene-nommee{ min-height:40px; align-items:center; } }
 .fiche-actions{ display:flex; flex-wrap:wrap; gap:var(--esp-2); }
-.fiche.compacte .fiche-actions .petit-bouton{ font-size:.78rem; padding:4px 10px; }
+.fiche.compacte .fiche-actions .petit-bouton{ font-size:.78rem; padding:6px 10px; }
 
 /* Une fiche en modification */
 .fiche-edition{ display:grid; gap:var(--esp-3); }
@@ -849,7 +871,7 @@ body.concentration .barre-recherche, body.concentration .trouvailles{ display:no
   display:grid; gap:2px; max-height:180px; overflow-y:auto;
 }
 .choix-liens legend{ padding:0 4px; }
-.case{ display:flex; align-items:center; gap:var(--esp-2); font-size:.92rem; cursor:pointer; }
+.case{ display:flex; align-items:center; gap:var(--esp-2); min-height:44px; font-size:.92rem; cursor:pointer; }
 .case input{ accent-color:var(--univers); }
 
 /* ---------- Mode concentration : seul le texte reste ---------- */
@@ -862,10 +884,12 @@ body.concentration .barre-outils,
 body.concentration .barre-etat{ display:none; }
 body.concentration .vue-ecriture{ grid-template-columns:minmax(0,1fr); }
 body.concentration .sortie-concentration{
-  display:block; position:absolute; top:var(--esp-2); right:var(--esp-4); z-index:5;
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:44px; min-height:44px; padding:8px 12px;
+  position:absolute; top:var(--esp-2); right:var(--esp-4); z-index:5;
   background:none; border:0; cursor:pointer;
   font:600 .75rem var(--f-titre); letter-spacing:.06em; color:var(--discret);
-  opacity:.35; transition:opacity var(--duree);
+  opacity:.80; transition:opacity var(--duree);
 }
 body.concentration .sortie-concentration:hover,
 body.concentration .sortie-concentration:focus-visible{ opacity:1; }
@@ -919,7 +943,6 @@ body.concentration .sortie-concentration:focus-visible{ opacity:1; }
   .chapitre-ligne, .plan-scene.active{ flex-wrap:wrap; justify-content:flex-end; row-gap:2px; }
   .chapitre-ligne > .plan-titre{ flex:1 0 auto; max-width:calc(100% - 14px); }
   .plan-scene.active > .plan-ouvrir{ flex:1 0 auto; max-width:100%; }
-  .plan-action{ width:34px; height:32px; } /* assez grands pour le doigt */
   .frise-actions{ opacity:1; } /* flèches des événements : bien visibles sans survol */
 }
 /* Écrans tactiles sans clavier : pas d'indications de touches (Ctrl K, Échap…) */
@@ -961,7 +984,7 @@ body.concentration .sortie-concentration:focus-visible{ opacity:1; }
   font-size:.92rem;
 }
 .frise-suivi strong{ color:var(--c-texte, var(--univers)); }
-.frise-suivi .petit-bouton{ font-size:.78rem; padding:4px 10px; }
+.frise-suivi .petit-bouton{ font-size:.78rem; padding:6px 10px; }
 
 /* La ligne du temps : un losange numéroté par événement, reliés par des pointillés */
 .ligne-temps{ list-style:none; margin:0; padding:0; display:grid; }
@@ -996,11 +1019,12 @@ body.concentration .sortie-concentration:focus-visible{ opacity:1; }
 .evt-entete{ display:flex; align-items:flex-start; gap:var(--esp-2); width:100%; }
 .evt-titre{ flex:1; min-width:0; font-size:1.05rem; }
 .evt-titre button{
-  background:none; border:0; padding:0; cursor:pointer; text-align:left;
+  min-height:44px;
+  background:none; border:0; padding:4px 0; cursor:pointer; text-align:left;
   font:inherit; color:var(--texte); overflow-wrap:anywhere;
 }
 .evt-titre button:hover{ color:var(--halo); text-decoration:underline dotted; text-underline-offset:4px; }
-.evt-actions{ flex:none; display:flex; gap:2px; margin:-4px -4px 0 0; }
+.evt-actions{ flex:none; display:flex; gap:6px; margin:-4px -4px 0 0; }
 .evt-type{ font-size:.66rem; max-width:100%; overflow:hidden; text-overflow:ellipsis; } /* type très long : coupé « … » */
 .evt-carte .pastille{ max-width:100%; overflow-wrap:anywhere; text-align:left; }
 .frise-suivi p{ min-width:0; overflow-wrap:anywhere; }
@@ -1022,6 +1046,7 @@ body.concentration .sortie-concentration:focus-visible{ opacity:1; }
 .ligne-temps.avec-suivi .evt:not(.concerne) .evt-losange{ border-color:var(--trait); }
 .evt.concerne .evt-losange{ background:var(--univers); box-shadow:var(--lueur-douce); }
 .evt.concerne .evt-losange b{ color:var(--sur-accent); }
+[data-univers="horreur"] .evt.concerne .evt-losange b{ color:#fff; }
 .evt.concerne .evt-carte{ border-color:color-mix(in srgb, var(--univers) 60%, transparent); box-shadow:inset 3px 0 0 var(--univers); }
 
 /* Qui apparaît où : une ligne par personnage ou lieu, une case par événement */
@@ -1038,9 +1063,9 @@ body.concentration .sortie-concentration:focus-visible{ opacity:1; }
 .presences-groupe + .presences-groupe{ margin-top:var(--esp-3); }
 .presences-groupe > .etiquette{ font-size:.7rem; margin-bottom:2px; }
 .presence{
-  width:100%; display:grid; grid-template-columns:minmax(0,7.5rem) minmax(0,1fr) 2.5ch; align-items:center; gap:var(--esp-2);
+  width:100%; min-height:44px; display:grid; grid-template-columns:minmax(0,7.5rem) minmax(0,1fr) 2.5ch; align-items:center; gap:var(--esp-2);
   background:none; border:0; border-radius:6px; cursor:pointer;
-  padding:5px 6px; text-align:left; color:var(--texte); font:inherit;
+  padding:6px; text-align:left; color:var(--texte); font:inherit;
 }
 .presence:hover{ background:var(--table-haute); }
 .presence[aria-pressed="true"]{ background:color-mix(in srgb, var(--univers) 16%, transparent); box-shadow:inset 3px 0 0 var(--univers); }
@@ -1063,10 +1088,11 @@ kbd{
 }
 .bouton-recherche{
   margin-left:auto;
+  min-width:44px; min-height:44px;
   display:inline-flex; align-items:center; gap:6px;
   background:var(--nuit); color:var(--discret);
   border:var(--filet) solid var(--trait); border-radius:var(--arrondi-pilule);
-  padding:4px 6px 4px 12px; cursor:pointer;
+  padding:6px 10px 6px 14px; cursor:pointer;
   font:600 .8rem var(--f-titre);
 }
 .bouton-recherche:hover{ color:var(--texte); border-color:var(--omni); }

@@ -83,8 +83,8 @@ function quitter(puis = null) {
   enDepart = true;
   ensuite = puis;
   // Ouverte depuis le texte : on recule d'un pas (le bouton « retour » ne ramènera pas à la frise).
-  // Sinon (adresse tapée, favori…), on remplace la frise par le texte dans l'historique.
-  if (history.state?.friseDepuisLeTexte) history.back();
+  // Sur un onglet dupliqué (history.length <= 1) ou accès direct, on remplace par le texte.
+  if (history.state?.friseDepuisLeTexte && history.length > 1) history.back();
   else location.replace(`#roman/${encodeURIComponent(etat.roman.id)}`);
 }
 
@@ -138,7 +138,7 @@ export function oublierFrise() {
 // Ouvrir une fiche dans le panneau (sur un écran moyen ou petit, le volet s'ouvre)
 function montrerFiche(id) {
   if (getComputedStyle($("panneau")).position === "fixed") basculerVolet(true);
-  ouvrirFiche(id);
+  return ouvrirFiche(id);
 }
 function nouvelEvenement() {
   if (getComputedStyle($("panneau")).position === "fixed") basculerVolet(true);
@@ -204,7 +204,7 @@ function vueVide() {
   return el("div", { class: "vide frise-vide" },
     el("p", {}, "Aucun événement pour l'instant."),
     el("p", { class: "discret" }, "Les événements sont les grands moments de la partie : une rencontre, un combat, une révélation… "
-      + "Ajoutez-les dans l'ordre où ils se sont passés, et reliez-leur les personnages et les lieux concernés : "
+      + "Ajoute-les dans l'ordre où ils se sont passés, et relie-leur les personnages et les lieux concernés : "
       + "la frise montrera qui apparaît où."),
     el("button", { type: "button", class: "bouton", "data-action": "nouvel" }, "+ Nouvel événement"),
   );
@@ -258,7 +258,7 @@ function pastille(f, suivi) {
 
 function vueSuivi(suivi, nombre, total) {
   return el("div", { class: "frise-suivi" },
-    el("p", {}, "Vous suivez ", el("strong", {}, suivi.titre || "Sans nom"), ` : ${pluriel(nombre, "événement")} sur ${total}.`),
+    el("p", {}, "Tu suis ", el("strong", {}, suivi.titre || "Sans nom"), ` : ${pluriel(nombre, "événement")} sur ${total}.`),
     el("span", { class: "ligne" },
       el("button", { type: "button", class: "petit-bouton", "data-action": "ouvrir", "data-id": suivi.id }, "Ouvrir sa fiche"),
       el("button", { type: "button", class: "petit-bouton", "data-action": "suivre", "data-id": "" }, "Tout afficher"),
@@ -305,10 +305,10 @@ function vuePresences(evenements, suivi) {
       ? [
           groupe("Personnages", personnages),
           groupe("Lieux", lieux),
-          el("p", { class: "discret petit" }, "Une case par événement, dans l'ordre. Choisissez un nom pour le suivre sur la frise."),
+          el("p", { class: "discret petit" }, "Une case par événement, dans l'ordre. Choisis un nom pour le suivre sur la frise."),
         ]
       : el("p", { class: "discret petit" }, "Aucun personnage ni lieu n'est relié aux événements pour l'instant. "
-          + "Pour en relier : ouvrez un événement, puis « Modifier »."),
+          + "Pour en relier : ouvre un événement, puis « Modifier »."),
   );
 }
 

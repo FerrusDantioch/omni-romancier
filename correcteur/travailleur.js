@@ -20,9 +20,6 @@ async function charger(adresse) {
   const reponse = await fetch(adresse);
   if (!reponse.ok) throw new Error(`dictionnaire introuvable (${reponse.status})`);
   moteur = new Moteur(await reponse.text());
-  // L'index des suggestions est préparé un peu plus tard, au calme : la
-  // première suggestion sera ainsi immédiate.
-  setTimeout(() => moteur.indexReplie(), 1500);
   return moteur.mots.size;
 }
 

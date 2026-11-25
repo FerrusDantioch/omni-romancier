@@ -85,7 +85,7 @@ export class Moteur {
     while (debut < liste.length) {
       let fin = liste.indexOf('\n', debut);
       if (fin < 0) fin = liste.length;
-      const ligne = liste.slice(debut, fin);
+      const ligne = liste.slice(debut, fin).replace(/\r$/, '');
       debut = fin + 1;
       if (!ligne) continue;
       // L'en-tête s'arrête au premier mot (qui commence toujours par « 0 »)

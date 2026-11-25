@@ -13,7 +13,7 @@
 // =====================================================================
 
 import * as db from "./db.js";
-import { el, nombre, pluriel, dateFichier, hauteurDansLeTexte, ecrireTexte } from "./outils.js";
+import { el, nombre, pluriel, dateFichier, hauteurDansLeTexte, ecrireTexte, lireAvecMigration } from "./outils.js";
 import { ouvrirDialogue, informer } from "./dialogues.js";
 import {
   etat, trouverScene, scenesDansLOrdre, chapitresTries, recompterScene, motsScene, motsChapitre, motsRoman, ecouter, annoncer,
@@ -28,7 +28,8 @@ const zones = {};
 // Nom du champ enregistré pour chaque mode
 const CHAMP = { notes: "notes", redige: "texte" };
 // Préfixe des copies de secours (dans le « localStorage » du navigateur)
-const PREFIXE_SECOURS = "atelier-secours:";
+const PREFIXE_SECOURS = "omni-romancier-secours:";
+const ANCIEN_PREFIXE_SECOURS = "atelier-secours:";
 // Délai avant l'enregistrement dans la base (en millisecondes)
 const DELAI_SAUVEGARDE = 500;
 // Délai maximal avant la copie de secours (en millisecondes)
@@ -36,7 +37,8 @@ const DELAI_SECOURS = 300;
 const OBJECTIF_PAR_DEFAUT = 500;
 // Côte à côte : le choix de cet appareil (gardé dans le navigateur), et la largeur
 // minimale de la colonne d'écriture pour y mettre les deux textes (en pixels)
-const CLE_COTE_A_COTE = "atelier-cote-a-cote";
+const CLE_COTE_A_COTE = "omni-romancier-cote-a-cote";
+const ANCIENNE_CLE_COTE_A_COTE = "atelier-cote-a-cote";
 const LARGEUR_COTE_A_COTE = 680;
 
 let scene = null;          // la scène ouverte
@@ -87,7 +89,7 @@ export function initialiserEditeur() {
   document.querySelectorAll("#barre-outils [data-mode]").forEach((b) =>
     b.addEventListener("click", () => choisirAffichage(b.dataset.mode)));
   // Côte à côte : choix gardé d'une fois sur l'autre, et suivi de la place disponible
-  try { coteACote = localStorage.getItem(CLE_COTE_A_COTE) === "oui"; } catch { /* stockage indisponible : un seul texte */ }
+  coteACote = lireAvecMigration(CLE_COTE_A_COTE, ANCIENNE_CLE_COTE_A_COTE) === "oui";
   new ResizeObserver(surLargeur).observe(document.querySelector(".editeur"));
   document.querySelectorAll("#barre-outils [data-format]").forEach((b) =>
     b.addEventListener("click", () => formater(b.dataset.format)));
@@ -223,8 +225,8 @@ function afficherAucuneScene() {
   const vide = !etat.chapitres.length;
   ecrireTexte($("editeur-vide-titre"), vide ? "Ce roman est encore vide" : "Aucune scène pour l'instant");
   ecrireTexte($("editeur-vide-texte"), vide
-    ? "Créez un premier chapitre : une première scène sera ouverte, prête à recevoir vos notes."
-    : "Ajoutez une scène (« + Scène » dans le plan) : elle s'ouvrira, prête à recevoir vos notes.");
+    ? "Crée un premier chapitre : une première scène sera ouverte, prête à recevoir tes notes."
+    : "Ajoute une scène (« + Scène » dans le plan) : elle s'ouvrira, prête à recevoir tes notes.");
   ecrireTexte($("bouton-premier-chapitre"), vide ? "Créer le premier chapitre" : "Ajouter une scène");
   $("editeur-vide").hidden = false;
   $("editeur-plein").hidden = true;
@@ -232,9 +234,14 @@ function afficherAucuneScene() {
   annoncer("scene-affichee", null);
 }
 
-// Une scène vient d'être supprimée : si c'était la scène ouverte, on ouvre sa voisine
-async function surSuppression({ voisine = null } = {}) {
+// Des scènes (ou un chapitre entier) viennent d'être supprimées :
+// on efface leurs copies de secours et, si la scène ouverte en faisait partie, on ouvre sa voisine.
+async function surSuppression({ voisine = null, ids = [] } = {}) {
+  effacerSecoursDe(ids);
   if (scene && !trouverScene(scene.id)) {
+    clearTimeout(minuterieSauvegarde);
+    clearTimeout(minuterieSecours);
+    minuterieSecours = null;
     effacerSecours(scene.id);
     scene = null;
     modifiee = false;
@@ -242,6 +249,7 @@ async function surSuppression({ voisine = null } = {}) {
     if (suivante) await ouvrirScene(suivante.id);
     else afficherAucuneScene();
   }
+  if (echecEnAttente && !modifiee && !clesSecours().length) echecEnAttente = false;
   majCompteurs();
 }
 
@@ -534,10 +542,13 @@ function protegerSautDePage(e, zone) {
   if (correctionEnCours || e.isComposing || !e.cancelable) return;
   const type = e.inputType;
   let action = "inserer", donnee = "";
-  if (type.startsWith("delete") && type.endsWith("Backward")) action = "arriere";
-  else if (type.startsWith("delete") && type.endsWith("Forward")) action = "avant";
-  else if (type === "insertLineBreak" || type === "insertParagraph") donnee = "\n";
-  else if (type === "insertText" || type === "insertReplacementText" || type === "insertFromPaste" || type === "insertFromDrop") {
+  if (type.startsWith("delete")) {
+    action = type.endsWith("Backward") ? "arriere"
+      : type.endsWith("Forward") ? "avant"
+        : "supprimer";
+  } else if (type === "insertLineBreak" || type === "insertParagraph") {
+    donnee = "\n";
+  } else if (type === "insertText" || type === "insertReplacementText" || type === "insertFromPaste" || type === "insertFromDrop") {
     donnee = e.data ?? e.dataTransfer?.getData("text/plain") ?? "";
   } else return;
   const correction = corrigerSaisie(zone.value, zone.selectionStart, zone.selectionEnd, action, donnee);
@@ -734,7 +745,7 @@ export async function sauverMaintenant() {
     // quitte le roman aussitôt après, il sera remis dans la base dès qu'elle fonctionnera de nouveau
     ecrireSecoursDe(copie);
     indiquerEnregistrement("erreur");
-    informer("L'enregistrement a échoué : " + erreur.message + ". Votre texte est gardé en secours.", { erreur: true });
+    informer("L'enregistrement a échoué : " + erreur.message + ". Ton texte est gardé en secours.", { erreur: true });
   }
 }
 
@@ -764,14 +775,34 @@ function ecrireSecoursDe(s) {
   }
 }
 function effacerSecours(id) {
-  try { localStorage.removeItem(PREFIXE_SECOURS + id); } catch { /* rien */ }
+  try {
+    localStorage.removeItem(PREFIXE_SECOURS + id);
+    localStorage.removeItem(ANCIEN_PREFIXE_SECOURS + id);
+  } catch { /* rien */ }
+}
+export function effacerSecoursDe(ids) {
+  for (const id of ids) effacerSecours(id);
+}
+function migrerAnciensSecours() {
+  try {
+    const anciens = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const cle = localStorage.key(i);
+      if (cle && cle.startsWith(ANCIEN_PREFIXE_SECOURS)) anciens.push(cle);
+    }
+    for (const ancienneCle of anciens) {
+      const id = ancienneCle.slice(ANCIEN_PREFIXE_SECOURS.length);
+      lireAvecMigration(PREFIXE_SECOURS + id, ancienneCle);
+    }
+  } catch { /* localStorage indisponible */ }
 }
 function clesSecours() {
+  migrerAnciensSecours();
   const cles = [];
   try {
     for (let i = 0; i < localStorage.length; i++) {
       const cle = localStorage.key(i);
-      if (cle.startsWith(PREFIXE_SECOURS)) cles.push(cle);
+      if (cle && (cle.startsWith(PREFIXE_SECOURS) || cle.startsWith(ANCIEN_PREFIXE_SECOURS))) cles.push(cle);
     }
   } catch { /* localStorage indisponible */ }
   return cles;
@@ -780,7 +811,8 @@ function clesSecours() {
 // Lit la copie de secours d'une scène (ou null)
 function lireSecours(id) {
   try {
-    const secours = JSON.parse(localStorage.getItem(PREFIXE_SECOURS + id));
+    const brut = lireAvecMigration(PREFIXE_SECOURS + id, ANCIEN_PREFIXE_SECOURS + id);
+    const secours = brut ? JSON.parse(brut) : null;
     return secours && typeof secours === "object" && typeof secours.sceneId === "string" ? secours : null;
   } catch {
     return null;
@@ -817,8 +849,11 @@ function reprendreSecours(s) {
 export async function recupererSecours({ sauf = null } = {}) {
   let recuperees = 0, gardees = 0, enMemoire = false;
   for (const cle of clesSecours()) {
-    if (sauf && cle === PREFIXE_SECOURS + sauf) continue;
-    const secours = lireSecours(cle.slice(PREFIXE_SECOURS.length));
+    const id = cle.startsWith(PREFIXE_SECOURS)
+      ? cle.slice(PREFIXE_SECOURS.length)
+      : cle.slice(ANCIEN_PREFIXE_SECOURS.length);
+    if (sauf && id === sauf) continue;
+    const secours = lireSecours(id);
     if (!secours) { effacerCle(cle); continue; } // copie illisible : inutilisable
     try {
       const enBase = await db.lire("scenes", secours.sceneId);
@@ -841,7 +876,7 @@ export async function recupererSecours({ sauf = null } = {}) {
   if (gardees) {
     echecEnAttente = true;
     informer("Du texte non enregistré est gardé en secours, mais n'a pas encore pu être remis dans le roman. "
-      + "Il sera repris à l'ouverture de la scène. N'effacez pas les données du navigateur.", { erreur: true, duree: 15000 });
+      + "Il sera repris à l'ouverture de la scène. N'efface pas les données du navigateur.", { erreur: true, duree: 15000 });
   }
 }
 function effacerCle(cle) {
@@ -997,12 +1032,12 @@ async function changerObjectif() {
         el("span", { class: "etiquette" }, "Nombre de mots à écrire par session"),
         el("input", { type: "number", name: "objectif", value: actuel, min: 1, max: 100000, step: 1 }),
       ),
-      el("p", { class: "discret petit" }, "La session redémarre chaque jour, ou quand vous cliquez sur « Nouvelle session »."),
+      el("p", { class: "discret petit" }, "La session redémarre chaque jour, ou quand tu cliques sur « Nouvelle session »."),
     ],
     ok: "Enregistrer",
     lireFormulaire: (form) => {
       const n = Math.round(Number(form.elements.objectif.value));
-      return n >= 1 && n <= 100000 ? n : "Indiquez un nombre entre 1 et 100 000.";
+      return n >= 1 && n <= 100000 ? n : "Indique un nombre entre 1 et 100 000.";
     },
   });
   if (!valeur) return;

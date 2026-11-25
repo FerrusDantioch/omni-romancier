@@ -7,7 +7,7 @@
 // =====================================================================
 
 import * as db from "./db.js";
-import { el, nouvelId } from "./outils.js";
+import { el, nouvelId, majInertVolets } from "./outils.js";
 import { confirmer, informer } from "./dialogues.js";
 import {
   etat, trouverFiche, fichesDe, annoncer, ecouter, deplacerEvenement, evenementsDe, chapitresTries, scenesDe, trouverScene,
@@ -48,6 +48,7 @@ const EXEMPLES = { autresNoms: "Surnoms, séparés par des virgules : la Vieille
 const DELAI_SAUVEGARDE = 400;
 // « Nommé dans ces scènes » : mis à jour un instant après la dernière touche (pas à chaque touche)
 const DELAI_SCENES = 600;
+const PREFIXE_SECOURS_FICHE = "omni-romancier-secours-fiche:";
 
 // Ce que montre le panneau en ce moment
 const vue = {
@@ -57,9 +58,11 @@ const vue = {
   repliees: new Set(),   // les fiches épinglées réduites à leur nom
 };
 
-let ficheModifiee = null;   // fiche en attente d'enregistrement
+const fichesModifiees = new Set(); // identifiants des fiches en attente d'enregistrement
 let minuterie = null;
 let minuterieScenes = null;
+let navigation = 0; // évite qu'un clic rapide soit écrasé par un await sauverFiche() précédent
+let declencheurPanneau = null; // élément à refocaliser quand le volet Fiches se referme
 
 const $ = (id) => document.getElementById(id);
 
@@ -101,7 +104,7 @@ export function initialiserPanneau() {
     else if (action === "monter") deplacer(id, -1);
     else if (action === "descendre") deplacer(id, +1);
     else if (action === "voir-frise") annoncer("voir-frise", id || null); // (la frise suit cette fiche, s'il y en a une)
-    else if (action === "aller-au-nom") { basculerVolet(false); allerAuNom(id, b.dataset.fiche); } // (petit écran : le volet laisse voir le texte)
+    else if (action === "aller-au-nom") { declencheurPanneau = null; basculerVolet(false); allerAuNom(id, b.dataset.fiche); } // (petit écran : le volet laisse voir le texte)
   });
 
   // « Nommé dans ces scènes » suit l'écriture (et le titre de la scène), l'ouverture d'une autre scène
@@ -115,39 +118,56 @@ export function initialiserPanneau() {
   for (const annonce of ["scene-affichee", "plan-change", "scene-renommee", "fiches-changees"]) ecouter(annonce, refaireScenesNommees);
 
   // Échap dans le panneau : retour au texte, curseur à sa place
-  document.addEventListener("keydown", (e) => {
+  document.addEventListener("keydown", async (e) => {
     if (e.key !== "Escape" || e.defaultPrevented || $("vue-roman").hidden || document.querySelector("dialog[open]")) return;
     const dansPanneau = panneau.contains(document.activeElement);
     const voletOuvert = $("vue-roman").classList.contains("panneau-ouvert");
     const clavierPerdu = document.activeElement === document.body || document.activeElement === null;
     if (!dansPanneau && !voletOuvert && !clavierPerdu) return;
     e.preventDefault();
-    sauverFiche();
-    $("vue-roman").classList.remove("panneau-ouvert");
-    revenirAuTexte();
+    await sauverFiche();
+    if (voletOuvert) basculerVolet(false);
+    if (!voletOuvert || !document.activeElement || document.activeElement === document.body) revenirAuTexte();
   });
 
   // Écran moyen ou petit : le panneau devient un volet
   $("bouton-fiches").addEventListener("click", () => basculerVolet());
-  $("fermer-panneau").addEventListener("click", () => { basculerVolet(false); revenirAuTexte(); });
+  $("fermer-panneau").addEventListener("click", () => {
+    basculerVolet(false);
+    if (!document.activeElement || document.activeElement === document.body) revenirAuTexte();
+  });
 
-  // Filet de sécurité : enregistrer la fiche si la page se cache ou se ferme
-  document.addEventListener("visibilitychange", () => { if (document.hidden) sauverFiche(); });
-  window.addEventListener("pagehide", () => sauverFiche());
+  // Filet de sécurité : copie synchrone en localStorage + enregistrement si la page se cache ou se ferme
+  const filetDeSecurite = () => { ecrireSecoursFichesEnAttente(); sauverFiche(); };
+  document.addEventListener("visibilitychange", () => { if (document.hidden) filetDeSecurite(); });
+  window.addEventListener("pagehide", filetDeSecurite);
 }
 
 // Ouvre ou ferme le volet (écrans moyens et petits)
 export function basculerVolet(forcer) {
   const v = $("vue-roman");
+  const panneau = $("panneau");
+  const etaitOuvert = v.classList.contains("panneau-ouvert");
   const ouvert = v.classList.toggle("panneau-ouvert", forcer);
   if (ouvert) v.classList.remove("plan-ouvert"); // un seul volet à la fois
   $("bouton-fiches").setAttribute("aria-expanded", String(ouvert));
+  majInertVolets();
+  if (ouvert && !etaitOuvert && getComputedStyle(panneau).position === "fixed") {
+    declencheurPanneau = document.activeElement;
+    const cible = panneau.querySelector('#fermer-panneau, [role="tab"][aria-selected="true"], button');
+    if (cible && !panneau.contains(document.activeElement)) cible.focus({ preventScroll: true });
+  } else if (!ouvert && etaitOuvert) {
+    if (declencheurPanneau?.isConnected && !panneau.contains(declencheurPanneau)) {
+      declencheurPanneau.focus({ preventScroll: true });
+    }
+    declencheurPanneau = null;
+  }
   return ouvert;
 }
 
 // Après le chargement d'un roman : on retrouve l'état du panneau laissé la dernière fois
 export async function preparerPanneau() {
-  ficheModifiee = null;
+  fichesModifiees.clear();
   const memo = await db.lireReglage("panneau:" + etat.roman.id, {});
   vue.onglet = CATEGORIES[memo.onglet] ? memo.onglet : "principal";
   vue.ficheId = trouverFiche(memo.ficheId) ? memo.ficheId : null;
@@ -160,7 +180,9 @@ export async function preparerPanneau() {
 
 export async function fermerPanneau() {
   await sauverFiche();
+  declencheurPanneau = null;
   $("vue-roman").classList.remove("panneau-ouvert");
+  majInertVolets();
 }
 
 function memoriserVue() {
@@ -175,9 +197,11 @@ function memoriserVue() {
 // Navigation dans le panneau
 // =====================================================================
 
-function changerOnglet(onglet) {
+async function changerOnglet(onglet) {
   if (vue.onglet === onglet && !vue.ficheId) return;
-  sauverFiche();
+  const jeton = ++navigation;
+  await sauverFiche();
+  if (jeton !== navigation || !etat.roman) return;
   vue.onglet = onglet;
   vue.ficheId = null;
   vue.edition = false;
@@ -187,10 +211,12 @@ function changerOnglet(onglet) {
 
 // Ouvre une fiche dans le panneau (utilisé aussi par la recherche Ctrl+K)
 // « selection » : en modification, sélectionne tout le nom (pour le remplacer en tapant)
-export function ouvrirFiche(id, { edition = false, focus = true, selection = false } = {}) {
+export async function ouvrirFiche(id, { edition = false, focus = true, selection = false } = {}) {
   const fiche = trouverFiche(id);
   if (!fiche) return;
-  sauverFiche();
+  const jeton = ++navigation;
+  await sauverFiche();
+  if (jeton !== navigation || !etat.roman || !trouverFiche(id)) return;
   vue.onglet = fiche.categorie;
   vue.ficheId = id;
   vue.edition = edition;
@@ -207,9 +233,11 @@ export function ouvrirFiche(id, { edition = false, focus = true, selection = fal
   }
 }
 
-function retourListe() {
-  sauverFiche();
+async function retourListe() {
+  const jeton = ++navigation;
   const ancienne = vue.ficheId;
+  await sauverFiche();
+  if (jeton !== navigation || !etat.roman) return;
   vue.ficheId = null;
   vue.edition = false;
   afficherPanneau();
@@ -219,7 +247,9 @@ function retourListe() {
 }
 
 async function terminerEdition() {
+  const jeton = ++navigation;
   await sauverFiche();
+  if (jeton !== navigation || !etat.roman) return;
   vue.edition = false;
   afficherPanneau();
   const titre = $("contenu-panneau").querySelector(".fiche-titre");
@@ -322,7 +352,7 @@ function vueListe(categorie) {
     bouton,
     // Un seul personnage principal : on rappelle qu'on peut en avoir un deuxième (épinglé lui aussi)
     categorie === "principal" && fiches.length === 1
-      ? el("p", { class: "discret petit" }, "Un deuxième personnage principal ? Créez sa fiche : elle sera épinglée elle aussi.")
+      ? el("p", { class: "discret petit" }, "Un deuxième personnage principal ? Crée sa fiche : elle sera épinglée elle aussi.")
       : null,
     el("ul", { class: "fiches" },
       fiches.map((f) => el("li", {},
@@ -338,11 +368,11 @@ function vueListe(categorie) {
 
 function messageVide(categorie) {
   return {
-    principal: "Aucune fiche de personnage principal. Créez-la (et celle d'un deuxième, s'il y en a deux) : "
-      + "elles resteront épinglées en haut du panneau pendant que vous écrivez.",
+    principal: "Aucune fiche de personnage principal. Crée-la (et celle d'un deuxième, s'il y en a deux) : "
+      + "elles resteront épinglées en haut du panneau pendant que tu écris.",
     pnj: "Aucun PNJ pour l'instant.",
     lieu: "Aucun lieu pour l'instant.",
-    evenement: "Aucun événement pour l'instant. Ajoutez-les dans l'ordre où ils se sont passés.",
+    evenement: "Aucun événement pour l'instant. Ajoute-les dans l'ordre où ils se sont passés.",
   }[categorie];
 }
 
@@ -532,7 +562,21 @@ function vueEdition(fiche) {
     planifierSauvegarde(fiche);
   };
 
-  const form = el("form", { class: "fiche-edition", oninput: surSaisie, onchange: surSaisie, onsubmit: (e) => { e.preventDefault(); terminerEdition(); } },
+  // Évite le double déclenchement input + change : input pour les champs texte, change pour les cases à cocher
+  const surEntree = (e) => {
+    if (e.target.type === "checkbox" || e.target.tagName === "SELECT") return;
+    surSaisie(e);
+  };
+  const surChangement = (e) => {
+    if (e.target.type !== "checkbox" && e.target.tagName !== "SELECT") return;
+    surSaisie(e);
+  };
+  const form = el("form", {
+    class: "fiche-edition",
+    oninput: surEntree,
+    onchange: surChangement,
+    onsubmit: (e) => { e.preventDefault(); terminerEdition(); },
+  },
     el("button", { type: "button", class: "lien-retour", "data-action": "liste" }, "← " + cat.onglet),
     el("p", { class: "etiquette" }, "Modifier : " + cat.nom),
     champTexte("titre", "Nom", fiche.titre, { court: true }),
@@ -591,28 +635,120 @@ function ajusterHauteur(zone) {
 
 function planifierSauvegarde(fiche) {
   fiche.modifie = Date.now();
-  ficheModifiee = fiche;
+  fichesModifiees.add(fiche.id);
   clearTimeout(minuterie);
   minuterie = setTimeout(sauverFiche, DELAI_SAUVEGARDE);
+}
+
+function ecrireSecoursFiche(fiche) {
+  if (!fiche) return;
+  try {
+    localStorage.setItem(PREFIXE_SECOURS_FICHE + fiche.id, JSON.stringify({
+      ficheId: fiche.id,
+      romanId: fiche.romanId,
+      titre: fiche.titre,
+      type: fiche.type,
+      champs: fiche.champs || {},
+      notes: fiche.notes,
+      t: fiche.modifie || Date.now(),
+    }));
+  } catch { /* stockage plein ou indisponible */ }
+}
+
+function effacerSecoursFiche(id) {
+  try { localStorage.removeItem(PREFIXE_SECOURS_FICHE + id); } catch { /* rien */ }
+}
+
+function ecrireSecoursFichesEnAttente() {
+  for (const id of fichesModifiees) ecrireSecoursFiche(trouverFiche(id));
+}
+
+export function effacerTousLesSecoursFiches() {
+  try {
+    const cles = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const cle = localStorage.key(i);
+      if (cle && cle.startsWith(PREFIXE_SECOURS_FICHE)) cles.push(cle);
+    }
+    for (const cle of cles) localStorage.removeItem(cle);
+  } catch { /* rien */ }
+}
+
+// Restaure d'éventuelles modifications de fiches gardées en secours synchrone sur pagehide
+export async function recupererSecoursFiches() {
+  const cles = [];
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const cle = localStorage.key(i);
+      if (cle && cle.startsWith(PREFIXE_SECOURS_FICHE)) cles.push(cle);
+    }
+  } catch { return true; }
+  let recuperees = 0, gardees = 0;
+  for (const cle of cles) {
+    let secours = null;
+    try { secours = JSON.parse(localStorage.getItem(cle)); } catch { /* illisible */ }
+    if (!secours || typeof secours !== "object" || typeof secours.ficheId !== "string") {
+      try { localStorage.removeItem(cle); } catch { /* rien */ }
+      continue;
+    }
+    try {
+      const enBase = await db.lire("fiches", secours.ficheId);
+      if (enBase && (enBase.modifie || 0) <= (secours.t || 0)) {
+        const champsSecours = secours.champs && typeof secours.champs === "object" && !Array.isArray(secours.champs)
+          ? secours.champs : {};
+        const change = enBase.titre !== secours.titre || enBase.type !== secours.type
+          || enBase.notes !== secours.notes || JSON.stringify(enBase.champs || {}) !== JSON.stringify(champsSecours);
+        if (change) {
+          const maj = { ...enBase, titre: secours.titre, type: secours.type, champs: champsSecours, notes: secours.notes, modifie: secours.t || Date.now() };
+          await db.ecrire("fiches", maj);
+          const locale = trouverFiche(secours.ficheId);
+          if (locale) Object.assign(locale, maj);
+          recuperees++;
+        }
+      }
+      try { localStorage.removeItem(cle); } catch { /* rien */ }
+    } catch {
+      gardees++; // Base indisponible : on garde la copie pour un prochain essai
+    }
+  }
+  if (recuperees && etat.roman) {
+    afficherPanneau();
+    annoncer("fiches-changees");
+  }
+  return gardees === 0;
 }
 
 // Renvoie false si l'enregistrement a échoué
 export async function sauverFiche() {
   clearTimeout(minuterie);
-  const fiche = ficheModifiee;
-  if (!fiche) return true;
-  ficheModifiee = null;
-  if (!trouverFiche(fiche.id)) return true; // supprimée entre-temps
-  try {
-    await db.ecrire("fiches", { ...fiche, champs: { ...fiche.champs } });
-    if (etat.roman && estEpinglee(fiche.id)) afficherEpinglee(); // les fiches épinglées suivent les changements
-    annoncer("fiches-changees"); // (nom changé : les fiches repérées dans le texte suivent)
-    return true;
-  } catch (erreur) {
-    ficheModifiee = fiche;
-    informer("La fiche n'a pas pu être enregistrée : " + erreur.message, { erreur: true });
-    return false;
+  if (!fichesModifiees.size) return true;
+  const ids = [...fichesModifiees];
+  let toutOk = true;
+  let uneSauvee = false;
+  let epingleeModifiee = false;
+  for (const id of ids) {
+    const fiche = trouverFiche(id);
+    if (!fiche) {
+      fichesModifiees.delete(id);
+      effacerSecoursFiche(id);
+      continue;
+    }
+    fichesModifiees.delete(id);
+    try {
+      await db.ecrire("fiches", { ...fiche, champs: { ...fiche.champs } });
+      if (!fichesModifiees.has(id)) effacerSecoursFiche(id);
+      uneSauvee = true;
+      if (etat.roman && estEpinglee(id)) epingleeModifiee = true;
+    } catch (erreur) {
+      fichesModifiees.add(id);
+      ecrireSecoursFiche(fiche);
+      toutOk = false;
+      informer("La fiche n'a pas pu être enregistrée : " + erreur.message, { erreur: true });
+    }
   }
+  if (epingleeModifiee && etat.roman) afficherEpinglee(); // les fiches épinglées suivent les changements
+  if (uneSauvee) annoncer("fiches-changees"); // (nom changé : les fiches repérées dans le texte suivent)
+  return toutOk;
 }
 
 // =====================================================================
@@ -641,7 +777,7 @@ export async function creerFiche(categorie, { titre = null, edition = true, focu
   }
   // Le formulaire s'affiche tout de suite ; l'enregistrement suit (sans faire attendre).
   // Nom proposé par défaut (« Nouveau PNJ ») : il est sélectionné, pour être remplacé en tapant.
-  ouvrirFiche(fiche.id, { edition, focus, selection: !titre });
+  await ouvrirFiche(fiche.id, { edition, focus, selection: !titre });
   annoncer("fiches-changees");
   await db.lot({ ecrire: aEcrire });
   return fiche;
@@ -657,7 +793,8 @@ async function supprimerFiche(id) {
     danger: true,
   });
   if (!ok) return;
-  if (ficheModifiee && ficheModifiee.id === id) ficheModifiee = null;
+  fichesModifiees.delete(id);
+  effacerSecoursFiche(id);
   // On retire aussi cette fiche des événements qui la citaient
   const evenementsModifies = [];
   for (const e of etat.fiches) {
@@ -701,7 +838,7 @@ function garderLeClavier(...selecteurs) {
 // Épingle une fiche, sous celles qui le sont déjà. S'il y en a déjà deux, la plus ancienne laisse sa place.
 async function epingler(id) {
   if (!trouverFiche(id)) return;
-  sauverFiche();
+  await sauverFiche();
   const ids = fichesEpinglees().map((f) => f.id).filter((x) => x !== id);
   ids.push(id);
   const retiree = ids.length > MAX_EPINGLEES ? trouverFiche(ids.shift()) : null;
@@ -712,7 +849,7 @@ async function epingler(id) {
 }
 
 async function desepingler(id) {
-  sauverFiche();
+  await sauverFiche();
   noterEpinglees(fichesEpinglees().map((f) => f.id).filter((x) => x !== id));
   vue.repliees.delete(id);
   await apresEpinglage();

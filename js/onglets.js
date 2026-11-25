@@ -15,7 +15,8 @@ const NOM = "atelier-romans";
 const canal = "BroadcastChannel" in window ? new BroadcastChannel(NOM) : null;
 const DELAI_AVANT_FORCER = 3000;  // l'autre page ne répond pas (endormie) : on prend la main d'office
 const INTERVALLE_ESSAIS = 1000;   // une page en attente regarde toutes les secondes si la place est libre
-const CLE_CEDE = "atelier-a-cede"; // (sessionStorage) cette page vient de céder sa place : elle attend
+const CLE_CEDE = "omni-romancier-a-cede"; // (sessionStorage) cette page vient de céder sa place : elle attend
+const ANCIENNE_CLE_CEDE = "atelier-a-cede";
 
 let demarree = false;
 let minuterieEssais = null;
@@ -86,8 +87,10 @@ export function demarrerSeul(demarrer, avantDeCeder) {
   // Cette page vient de céder sa place à une autre : elle attend, sans la lui reprendre
   let aCede = false;
   try {
-    aCede = Date.now() - Number(sessionStorage.getItem(CLE_CEDE) || 0) < 10000;
+    const brut = sessionStorage.getItem(CLE_CEDE) ?? sessionStorage.getItem(ANCIENNE_CLE_CEDE);
+    aCede = Date.now() - Number(brut || 0) < 10000;
     sessionStorage.removeItem(CLE_CEDE);
+    sessionStorage.removeItem(ANCIENNE_CLE_CEDE);
   } catch { /* rien */ }
   if (aCede) { attendre(); return; }
 
@@ -102,6 +105,8 @@ export function demarrerSeul(demarrer, avantDeCeder) {
 function montrerAttente(oui) {
   const alerte = document.getElementById("alerte-onglet");
   const principal = document.querySelector("main");
+  const entete = document.querySelector("header.entete");
   if (alerte) alerte.hidden = !oui;
   if (principal) principal.hidden = oui;
+  if (entete) entete.inert = oui;
 }
