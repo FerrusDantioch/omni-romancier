@@ -13,12 +13,12 @@
 // =====================================================================
 
 import { estSautDePage } from "../commun/saut-de-page.js";
-import { el } from "./outils.js";
+import { el, estModeLibre } from "./outils.js";
 import * as db from "./db.js";
 import { etat, chapitresTries, scenesDe, trouverScene, trouverChapitre, fichesDe, trouverFiche } from "./etat.js";
 import { ouvrirDialogue, informer } from "./dialogues.js";
 import { relireMaintenant, revenirAuTexte } from "./editeur.js";
-import { CATEGORIES, sauverFiche } from "./panneau.js";
+import { champsDeLaFiche, sauverFiche } from "./panneau.js";
 import { SIGNATURE, creerEpub, creerDocx, telecharger } from "./export-fichiers.js";
 
 // Les types de fichier proposés
@@ -143,7 +143,9 @@ async function choisirEtExporter(typeVoulu) {
           el("span", {}, "Les notes des scènes")),
         el("label", { class: "option-export" },
           el("input", { type: "checkbox", name: "fiches", checked: !!memo.fiches }),
-          el("span", {}, "Les fiches", el("span", { class: "discret" }, " — personnages, PNJ, lieux, événements"))),
+          el("span", {}, "Les fiches", el("span", { class: "discret" }, estModeLibre(etat.roman)
+            ? " — synopsis, personnages principaux, secondaires, lieux, intrigue"
+            : " — personnages, PNJ, lieux, événements"))),
       ),
       el("p", { class: "discret petit" }, "Le texte rédigé est toujours exporté ; les notes et les fiches seulement si leur case est cochée.", conseilPdf),
     ],
@@ -267,14 +269,20 @@ function annexeDesNotes(parties) {
 }
 
 // Les intitulés des catégories, au pluriel (dans l'ordre de l'export)
-const TITRES_FICHES = {
-  principal: "Personnages principaux", pnj: "PNJ", lieu: "Lieux", evenement: "Événements",
-};
+function titresFiches() {
+  return estModeLibre(etat.roman)
+    ? { principal: "Personnages principaux", pnj: "Personnages secondaires", lieu: "Lieux", evenement: "Intrigue et événements" }
+    : { principal: "Personnages principaux", pnj: "PNJ", lieu: "Lieux", evenement: "Événements" };
+}
 
 // Toutes les fiches du roman, catégorie par catégorie (les événements dans l'ordre de la chronologie)
 function annexeDesFiches() {
   const blocs = [];
-  for (const [categorie, titre] of Object.entries(TITRES_FICHES)) {
+  if ((etat.roman?.synopsis || "").trim()) {
+    blocs.push(el("h3", { class: "livre-annexe-titre" }, "Synopsis"));
+    blocs.push(...lignesDAnnexe(etat.roman.synopsis));
+  }
+  for (const [categorie, titre] of Object.entries(titresFiches())) {
     const liste = fichesDe(categorie);
     if (!liste.length) continue;
     blocs.push(el("h3", { class: "livre-annexe-titre" }, titre));
@@ -291,7 +299,7 @@ function blocsDeLaFiche(fiche) {
     blocs.push(el("p", { class: "livre-annexe-libelle" }, libelle));
     blocs.push(...lignesDAnnexe(texte));
   };
-  for (const [cle, libelle] of CATEGORIES[fiche.categorie].champs) champ(libelle, fiche.champs?.[cle]);
+  for (const [cle, libelle] of champsDeLaFiche(fiche)) champ(libelle, fiche.champs?.[cle]);
   if (fiche.categorie === "evenement") {
     const noms = (ids) => (ids || []).map(trouverFiche).filter(Boolean).map((f) => f.titre || "Sans nom").join(", ");
     champ("Personnages concernés", noms(fiche.champs?.personnages));

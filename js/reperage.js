@@ -16,7 +16,7 @@
 import { el, ecrireTexte } from "./outils.js";
 import { masquerSauts } from "../commun/saut-de-page.js";
 import { etat, ecouter } from "./etat.js";
-import { CATEGORIES, ouvrirFiche } from "./panneau.js";
+import { categorieDe, estTitreParDefaut, ouvrirFiche } from "./panneau.js";
 
 const CATEGORIES_REPEREES = ["principal", "pnj", "lieu"];
 const DELAI = 500; // on relit le texte un instant après la dernière touche, pas à chaque touche
@@ -103,7 +103,7 @@ export function majReperage() {
     if (!b) b = pastilles.appendChild(el("button", { type: "button", class: "pastille" }));
     b.hidden = false;
     b.dataset.fiche = f.id;
-    const titre = CATEGORIES[f.categorie].nom + (f.type ? " · " + f.type : "");
+    const titre = categorieDe(f.categorie).nom + (f.type ? " · " + f.type : "");
     if (b.title !== titre) b.title = titre;
     ecrireTexte(b, f.titre);
   });
@@ -134,7 +134,7 @@ function majBouton(nombre) {
 // Une fiche sans vrai nom (« Nouveau PNJ », pas encore renommée) n'est pas cherchée
 export function estReperable(f) {
   return CATEGORIES_REPEREES.includes(f.categorie) && (f.titre || "").trim() !== ""
-    && f.titre.trim() !== CATEGORIES[f.categorie].nouveau;
+    && !estTitreParDefaut(f.categorie, f.titre.trim());
 }
 
 // =====================================================================

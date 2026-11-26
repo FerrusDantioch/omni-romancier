@@ -22,7 +22,7 @@
 
 import { el, STYLES_DU_TEXTE, placeDuTexte, lireAvecMigration } from "./outils.js";
 import { etat, ecouter, trouverFiche } from "./etat.js";
-import { CATEGORIES, ouvrirFiche, basculerVolet } from "./panneau.js";
+import { categorieDe, ouvrirFiche, assurerPanneauVisible } from "./panneau.js";
 import { estReperable, preparerNoms, nomsDansLeTexte, signatureDesNoms } from "./reperage.js";
 import { estSautDePage } from "../commun/saut-de-page.js";
 import { correcteur, fautesDeLigne, initialiserOrthographe, proposerCorrections, fermerBulle as fermerCorrections, replacerBulle } from "./orthographe.js";
@@ -374,7 +374,7 @@ function surClic(e, copie) {
   bulle.replaceChildren(...ids.map((id) => {
     const f = trouverFiche(id);
     return el("button", { type: "button", class: "bulle-fiche", "data-fiche": id, title: "Ouvrir la fiche" },
-      el("span", { class: "bulle-categorie" }, CATEGORIES[f.categorie].nom),
+      el("span", { class: "bulle-categorie" }, categorieDe(f.categorie).nom),
       el("span", { class: "bulle-nom" }, f.titre || "Sans nom"),
       el("span", { "aria-hidden": "true" }, "›"),
     );
@@ -440,7 +440,6 @@ export function cacherBulle() {
 
 function ouvrir(id) {
   cacherBulle();
-  // Écran moyen ou petit : le panneau est un volet, on l'ouvre
-  if (getComputedStyle($("panneau")).position === "fixed") basculerVolet(true);
+  assurerPanneauVisible();
   ouvrirFiche(id, { focus: false });
 }

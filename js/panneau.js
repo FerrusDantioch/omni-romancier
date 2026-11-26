@@ -7,7 +7,7 @@
 // =====================================================================
 
 import * as db from "./db.js";
-import { el, nouvelId, majInertVolets } from "./outils.js";
+import { el, nouvelId, majInertVolets, modeDuRoman, estModeLibre } from "./outils.js";
 import { confirmer, informer } from "./dialogues.js";
 import {
   etat, trouverFiche, fichesDe, annoncer, ecouter, deplacerEvenement, evenementsDe, chapitresTries, scenesDe, trouverScene,
@@ -19,32 +19,121 @@ import { estReperable, passagesDeLaScene, toutEstLu, quandToutEstLu } from "./re
 // « Autres noms » : surnoms qui servent aussi à repérer la fiche dans le texte (voir reperage.js)
 const AUTRES_NOMS = ["autresNoms", "Autres noms"];
 
-// Les catégories de fiches et leurs champs (clé du champ, libellé)
-export const CATEGORIES = {
-  principal: {
-    onglet: "Principal", nom: "Personnage principal", nouveau: "Nouveau personnage principal",
-    exempleType: "Héroïne, mercenaire, enquêteur…",
-    champs: [AUTRES_NOMS, ["apparence", "Apparence"], ["caractere", "Caractère"], ["background", "Background de départ"], ["relations", "Relations"]],
+// Les catégories de fiches et leurs champs selon le mode du roman (JDR ou Roman libre)
+const CATEGORIES_PAR_MODE = {
+  jdr: {
+    principal: {
+      onglet: "Principal", nom: "Personnage principal", nouveau: "Nouveau personnage principal",
+      exempleType: "Héroïne, mercenaire, enquêteur…",
+      champs: [AUTRES_NOMS, ["apparence", "Apparence"], ["caractere", "Caractère"], ["background", "Background de départ"], ["relations", "Relations"]],
+    },
+    pnj: {
+      onglet: "PNJ", nom: "PNJ", nouveau: "Nouveau PNJ",
+      exempleType: "Allié, rival, marchand…",
+      champs: [AUTRES_NOMS, ["apparence", "Apparence"], ["caractere", "Caractère"], ["background", "Background"], ["relations", "Relations"]],
+    },
+    lieu: {
+      onglet: "Lieux", nom: "Lieu", nouveau: "Nouveau lieu",
+      exempleType: "Ville, taverne, vaisseau…",
+      champs: [AUTRES_NOMS, ["description", "Description"], ["ambiance", "Ambiance"]],
+    },
+    evenement: {
+      onglet: "Événements", nom: "Événement", nouveau: "Nouvel événement",
+      exempleType: "Combat, rencontre, révélation…",
+      champs: [["quand", "Date ou moment"], ["resume", "Résumé"]],
+    },
   },
-  pnj: {
-    onglet: "PNJ", nom: "PNJ", nouveau: "Nouveau PNJ",
-    exempleType: "Allié, rival, marchand…",
-    champs: [AUTRES_NOMS, ["apparence", "Apparence"], ["caractere", "Caractère"], ["background", "Background"], ["relations", "Relations"]],
-  },
-  lieu: {
-    onglet: "Lieux", nom: "Lieu", nouveau: "Nouveau lieu",
-    exempleType: "Ville, taverne, vaisseau…",
-    champs: [AUTRES_NOMS, ["description", "Description"], ["ambiance", "Ambiance"]],
-  },
-  evenement: {
-    onglet: "Événements", nom: "Événement", nouveau: "Nouvel événement",
-    exempleType: "Combat, rencontre, révélation…",
-    champs: [["quand", "Date ou moment"], ["resume", "Résumé"]],
+  libre: {
+    principal: {
+      onglet: "Principaux", nom: "Personnage principal", nouveau: "Nouveau personnage principal",
+      exempleType: "Protagoniste, narrateur, antagoniste…",
+      champs: [
+        AUTRES_NOMS,
+        ["apparence", "Apparence"],
+        ["caractere", "Caractère & psychologie"],
+        ["background", "Passé / Parcours"],
+        ["objectif", "Objectif & motivations"],
+        ["arc", "Arc narratif"],
+        ["relations", "Relations"],
+      ],
+    },
+    pnj: {
+      onglet: "Secondaires", nom: "Personnage secondaire", nouveau: "Nouveau personnage secondaire",
+      exempleType: "Confident, rival, mentor, témoin…",
+      champs: [
+        AUTRES_NOMS,
+        ["apparence", "Apparence"],
+        ["caractere", "Caractère"],
+        ["background", "Passé / Parcours"],
+        ["objectif", "Rôle & objectif"],
+        ["relations", "Relations"],
+      ],
+    },
+    lieu: {
+      onglet: "Lieux", nom: "Lieu", nouveau: "Nouveau lieu",
+      exempleType: "Ville, maison, café, bureau…",
+      champs: [
+        AUTRES_NOMS,
+        ["description", "Description"],
+        ["ambiance", "Ambiance & détails sensoriels"],
+        ["symbolique", "Rôle dans le récit"],
+      ],
+    },
+    evenement: {
+      onglet: "Intrigue", nom: "Événement", nouveau: "Nouvel événement",
+      exempleType: "Élément déclencheur, rebondissement, climax, révélation…",
+      champs: [
+        ["quand", "Date ou moment"],
+        ["resume", "Résumé"],
+        ["enjeu", "Enjeu & conséquences"],
+      ],
+    },
   },
 };
+
+export const CATEGORIES = CATEGORIES_PAR_MODE.jdr;
+
+const LIBELLES_COMPLEMENTAIRES = {
+  objectif: "Objectif & motivations",
+  arc: "Arc narratif",
+  symbolique: "Rôle dans le récit",
+  enjeu: "Enjeu & conséquences",
+};
+
+export function categoriesDuMode(mode = modeDuRoman(etat.roman)) {
+  return CATEGORIES_PAR_MODE[mode] || CATEGORIES_PAR_MODE.jdr;
+}
+
+export function categorieDe(categorie, mode = modeDuRoman(etat.roman)) {
+  return categoriesDuMode(mode)[categorie] || CATEGORIES_PAR_MODE.jdr[categorie];
+}
+
+export function estTitreParDefaut(categorie, titre) {
+  return Object.values(CATEGORIES_PAR_MODE).some((cats) => cats[categorie]?.nouveau === titre);
+}
+
+// Champs actifs de la fiche + champs renseignés dans l'autre mode (conversion sans perte visible)
+export function champsDeLaFiche(fiche) {
+  const cat = categorieDe(fiche.categorie);
+  const champs = [...cat.champs];
+  const deja = new Set(champs.map(([cle]) => cle));
+  for (const [cle, libelle] of Object.entries(LIBELLES_COMPLEMENTAIRES)) {
+    if (!deja.has(cle) && (fiche.champs?.[cle] || "").trim()) {
+      champs.push([cle, libelle]);
+    }
+  }
+  return champs;
+}
+
 // Les champs d'une ligne (courts) ; les autres sont des zones de texte
 const CHAMPS_COURTS = ["quand", "autresNoms"];
-const EXEMPLES = { autresNoms: "Surnoms, séparés par des virgules : la Vieille, Corbeau…" };
+const EXEMPLES = {
+  autresNoms: "Surnoms, séparés par des virgules : la Vieille, Corbeau…",
+  objectif: "Ce que veut le personnage, ce qui le pousse à agir…",
+  arc: "Comment il évolue du début à la fin du roman…",
+  symbolique: "Ce que ce lieu représente, son importance dans l'intrigue…",
+  enjeu: "Ce qui change après cet événement, ses répercussions…",
+};
 const DELAI_SAUVEGARDE = 400;
 // « Nommé dans ces scènes » : mis à jour un instant après la dernière touche (pas à chaque touche)
 const DELAI_SCENES = 600;
@@ -56,7 +145,10 @@ const vue = {
   ficheId: null,         // fiche ouverte (null = la liste)
   edition: false,        // true = formulaire de modification
   repliees: new Set(),   // les fiches épinglées réduites à leur nom
+  masque: false,         // panneau masqué sur grand écran
 };
+
+const estVolet = () => matchMedia("(max-width: 1100px)").matches;
 
 const fichesModifiees = new Set(); // identifiants des fiches en attente d'enregistrement
 let minuterie = null;
@@ -130,11 +222,19 @@ export function initialiserPanneau() {
     if (!voletOuvert || !document.activeElement || document.activeElement === document.body) revenirAuTexte();
   });
 
-  // Écran moyen ou petit : le panneau devient un volet
-  $("bouton-fiches").addEventListener("click", () => basculerVolet());
+  // Écran moyen ou petit : le panneau devient un volet ; grand écran : on le masque/affiche
+  $("bouton-fiches").addEventListener("click", () => {
+    if (estVolet()) basculerVolet();
+    else basculerPanneauDesktop();
+  });
   $("fermer-panneau").addEventListener("click", () => {
-    basculerVolet(false);
-    if (!document.activeElement || document.activeElement === document.body) revenirAuTexte();
+    if (estVolet()) {
+      basculerVolet(false);
+      if (!document.activeElement || document.activeElement === document.body) revenirAuTexte();
+    } else {
+      basculerPanneauDesktop(true);
+      revenirAuTexte();
+    }
   });
 
   // Filet de sécurité : copie synchrone en localStorage + enregistrement si la page se cache ou se ferme
@@ -165,6 +265,25 @@ export function basculerVolet(forcer) {
   return ouvert;
 }
 
+// Rend le panneau visible quel que soit le format d'écran (volet sur petit écran, colonne sur grand écran)
+export function assurerPanneauVisible() {
+  if (estVolet()) basculerVolet(true);
+  else if (vue.masque) basculerPanneauDesktop(false);
+}
+
+function appliquerVisibiliteDesktop() {
+  const v = $("vue-roman");
+  v.classList.toggle("panneau-masque", vue.masque);
+  if (!estVolet()) $("bouton-fiches").setAttribute("aria-expanded", String(!vue.masque));
+}
+
+function basculerPanneauDesktop(forcer) {
+  vue.masque = typeof forcer === "boolean" ? forcer : !vue.masque;
+  appliquerVisibiliteDesktop();
+  memoriserVue();
+  return !vue.masque;
+}
+
 // Après le chargement d'un roman : on retrouve l'état du panneau laissé la dernière fois
 export async function preparerPanneau() {
   fichesModifiees.clear();
@@ -173,15 +292,18 @@ export async function preparerPanneau() {
   vue.ficheId = trouverFiche(memo.ficheId) ? memo.ficheId : null;
   vue.edition = false;
   vue.repliees = new Set(Array.isArray(memo.repliees) ? memo.repliees : []);
+  vue.masque = Boolean(memo.masque);
   // (version précédente : une seule fiche épinglée, repliée ou non)
   if (memo.epingleeRepliee && etat.roman.ficheEpinglee) vue.repliees.add(etat.roman.ficheEpinglee);
+  appliquerVisibiliteDesktop();
   afficherPanneau();
 }
 
 export async function fermerPanneau() {
   await sauverFiche();
   declencheurPanneau = null;
-  $("vue-roman").classList.remove("panneau-ouvert");
+  vue.masque = false;
+  $("vue-roman").classList.remove("panneau-ouvert", "panneau-masque");
   majInertVolets();
 }
 
@@ -190,6 +312,7 @@ function memoriserVue() {
   db.ecrireReglage("panneau:" + etat.roman.id, {
     onglet: vue.onglet, ficheId: vue.ficheId,
     repliees: [...vue.repliees].filter(estEpinglee), // (seulement celles qui sont encore épinglées)
+    masque: vue.masque,
   });
 }
 
@@ -271,8 +394,14 @@ function replierEpinglee(id) {
 
 export function afficherPanneau() {
   if (!etat.roman) return;
+  const cats = categoriesDuMode();
   document.querySelectorAll("[data-onglet]").forEach((b) => {
-    const actif = b.dataset.onglet === vue.onglet;
+    const cle = b.dataset.onglet;
+    const actif = cle === vue.onglet;
+    if (cats[cle]) {
+      b.textContent = cats[cle].onglet;
+      b.title = cle === "principal" ? "Personnages principaux" : cle === "pnj" && estModeLibre(etat.roman) ? "Personnages secondaires" : cats[cle].onglet;
+    }
     b.setAttribute("aria-selected", String(actif));
     b.tabIndex = actif ? 0 : -1;
   });
@@ -316,7 +445,7 @@ function afficherContenu() {
 // ---------- La liste d'un onglet ----------
 
 function vueListe(categorie) {
-  const cat = CATEGORIES[categorie];
+  const cat = categorieDe(categorie);
   const fiches = fichesDe(categorie);
   const bouton = el("button", { type: "button", class: "petit-bouton nouvelle-fiche", "data-action": "nouvelle" }, "+ " + cat.nouveau);
   if (fiches.length === 0) {
@@ -367,21 +496,24 @@ function vueListe(categorie) {
 }
 
 function messageVide(categorie) {
+  const libre = estModeLibre(etat.roman);
   return {
     principal: "Aucune fiche de personnage principal. Crée-la (et celle d'un deuxième, s'il y en a deux) : "
       + "elles resteront épinglées en haut du panneau pendant que tu écris.",
-    pnj: "Aucun PNJ pour l'instant.",
+    pnj: libre ? "Aucun personnage secondaire pour l'instant." : "Aucun PNJ pour l'instant.",
     lieu: "Aucun lieu pour l'instant.",
-    evenement: "Aucun événement pour l'instant. Ajoute-les dans l'ordre où ils se sont passés.",
+    evenement: libre
+      ? "Aucun événement d'intrigue pour l'instant. Ajoute les étapes du récit dans l'ordre."
+      : "Aucun événement pour l'instant. Ajoute-les dans l'ordre où ils se sont passés.",
   }[categorie];
 }
 
 // ---------- Une fiche, en lecture ----------
 
 function vueLecture(fiche, { compacte }) {
-  const cat = CATEGORIES[fiche.categorie];
+  const cat = categorieDe(fiche.categorie);
   const epinglee = estEpinglee(fiche.id);
-  const champs = cat.champs
+  const champs = champsDeLaFiche(fiche)
     .filter(([cle]) => (fiche.champs?.[cle] || "").trim())
     .map(([cle, libelle]) => [el("dt", {}, libelle), el("dd", {}, fiche.champs[cle])]);
   if ((fiche.notes || "").trim()) champs.push([el("dt", {}, "Notes"), el("dd", {}, fiche.notes)]);
@@ -543,8 +675,9 @@ function refaireScenesNommees() {
 // ---------- Une fiche, en modification ----------
 
 function vueEdition(fiche) {
-  const cat = CATEGORIES[fiche.categorie];
+  const cat = categorieDe(fiche.categorie);
   fiche.champs ||= {};
+  const champsAEditer = champsDeLaFiche(fiche);
   const idListe = "types-" + fiche.categorie;
   const typesExistants = [...new Set(fichesDe(fiche.categorie).map((f) => f.type).filter(Boolean))];
 
@@ -585,7 +718,7 @@ function vueEdition(fiche) {
       el("input", { type: "text", name: "type", value: fiche.type || "", list: idListe, placeholder: cat.exempleType, autocomplete: "off" }),
       el("datalist", { id: idListe }, typesExistants.map((t) => el("option", { value: t }))),
     ),
-    cat.champs.map(([cle, libelle]) => champTexte(cle, libelle, fiche.champs[cle], { court: CHAMPS_COURTS.includes(cle), exemple: EXEMPLES[cle] })),
+    champsAEditer.map(([cle, libelle]) => champTexte(cle, libelle, fiche.champs[cle], { court: CHAMPS_COURTS.includes(cle), exemple: EXEMPLES[cle] })),
     fiche.categorie === "evenement" ? [
       choixLiens("personnages", "Personnages concernés", [...fichesDe("principal"), ...fichesDe("pnj")], fiche.champs.personnages),
       choixLiens("lieux", "Lieux concernés", fichesDe("lieu"), fiche.champs.lieux),
@@ -759,7 +892,7 @@ export async function sauverFiche() {
 // (La recherche Ctrl+K l'utilise avec un nom déjà tapé, sans quitter le texte.)
 export async function creerFiche(categorie, { titre = null, edition = true, focus = true } = {}) {
   await sauverFiche();
-  const cat = CATEGORIES[categorie];
+  const cat = categorieDe(categorie);
   const memes = etat.fiches.filter((f) => f.categorie === categorie);
   const fiche = {
     id: nouvelId(), romanId: etat.roman.id, categorie,

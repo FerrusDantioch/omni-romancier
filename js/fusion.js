@@ -23,8 +23,9 @@ import { PREFIXE_SUPPRESSION, MAGASINS_SUIVIS, GROUPES, memeContenu, dateDe, dat
 // Libellés des champs de fiche (pour recopier une autre version dans les notes)
 const LIBELLES = {
   titre: "Nom", type: "Type", autresNoms: "Autres noms", apparence: "Apparence", caractere: "Caractère",
-  background: "Background", relations: "Relations", description: "Description", ambiance: "Ambiance",
-  quand: "Date ou moment", resume: "Résumé", notes: "Notes",
+  background: "Background", objectif: "Objectif", arc: "Arc narratif", relations: "Relations",
+  description: "Description", ambiance: "Ambiance", symbolique: "Rôle dans le récit",
+  quand: "Date ou moment", resume: "Résumé", enjeu: "Enjeu & conséquences", notes: "Notes",
 };
 const CHAMP_DE_DATE = { titre: "majTitre", place: "majPlace" };
 

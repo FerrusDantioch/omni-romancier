@@ -61,6 +61,14 @@
   --horreur-texte:#e46a55; /* le même rouge, un peu plus clair, quand il colore du TEXTE (sinon peu lisible) */
   --autre:var(--omni);   /* Autre : violet de l'Omni-système */
 
+  /* Couleurs des genres littéraires (mode Roman libre) */
+  --genre-contemporain:#34d399;
+  --genre-policier:#f97316;
+  --genre-policier-texte:#fb923c;
+  --genre-imaginaire:#38bdf8;
+  --genre-historique:#d4a359;
+  --genre-romance:#f472b6;
+
   /* Couleur d'accent de l'univers en cours (changée automatiquement plus bas) */
   --univers:var(--omni);
 
@@ -118,6 +126,11 @@
 [data-univers="space"]{   --univers:var(--space); }
 [data-univers="horreur"]{ --univers:var(--horreur); --c-texte:var(--horreur-texte); }
 [data-univers="autre"]{   --univers:var(--autre); }
+[data-univers="genre-contemporain"]{ --univers:var(--genre-contemporain); }
+[data-univers="genre-policier"]{     --univers:var(--genre-policier); --c-texte:var(--genre-policier-texte); }
+[data-univers="genre-imaginaire"]{   --univers:var(--genre-imaginaire); }
+[data-univers="genre-historique"]{   --univers:var(--genre-historique); }
+[data-univers="genre-romance"]{      --univers:var(--genre-romance); }
 
 /* ---------- 4. Confort visuel : moins de mouvement si demandé ---------- */
 @media (prefers-reduced-motion: reduce){

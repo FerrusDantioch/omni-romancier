@@ -10,11 +10,11 @@
 // (ou du navigateur) ramène donc au texte, à l'endroit exact où l'on écrivait.
 // =====================================================================
 
-import { el, pluriel } from "./outils.js";
+import { el, pluriel, estModeLibre } from "./outils.js";
 import { informer } from "./dialogues.js";
 import { etat, fichesDe, trouverFiche, deplacerEvenement, ecouter } from "./etat.js";
 import { sauverMaintenant, retenirPosition, retrouverPosition, quitterConcentration } from "./editeur.js";
-import { sauverFiche, afficherPanneau, ouvrirFiche, creerFiche, basculerVolet } from "./panneau.js";
+import { sauverFiche, afficherPanneau, ouvrirFiche, creerFiche, assurerPanneauVisible } from "./panneau.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -135,13 +135,13 @@ export function oublierFrise() {
   enDepart = false;
 }
 
-// Ouvrir une fiche dans le panneau (sur un écran moyen ou petit, le volet s'ouvre)
+// Ouvrir une fiche dans le panneau (sur un écran moyen ou petit, le volet s'ouvre ; sur grand écran, le panneau est réaffiché)
 function montrerFiche(id) {
-  if (getComputedStyle($("panneau")).position === "fixed") basculerVolet(true);
+  assurerPanneauVisible();
   return ouvrirFiche(id);
 }
 function nouvelEvenement() {
-  if (getComputedStyle($("panneau")).position === "fixed") basculerVolet(true);
+  assurerPanneauVisible();
   return creerFiche("evenement");
 }
 
@@ -187,13 +187,15 @@ function afficherFrise() {
 }
 
 function vueTete(evenements) {
+  const libre = estModeLibre(etat.roman);
   return el("header", { class: "frise-tete" },
     el("button", { type: "button", class: "lien-retour", "data-action": "retour" }, "← Retour au texte"),
     el("div", { class: "frise-tete-ligne" },
       el("div", { class: "frise-titres" },
-        el("p", { class: "etiquette" }, "Frise des événements"),
+        el("p", { class: "etiquette" }, libre ? "Frise de l'intrigue" : "Frise des événements"),
         el("h1", { id: "titre-frise", tabindex: "-1" }, etat.roman.titre),
-        evenements.length ? el("p", { class: "discret petit" }, pluriel(evenements.length, "événement") + ", dans l'ordre où ils se sont passés") : null,
+        evenements.length ? el("p", { class: "discret petit" },
+          pluriel(evenements.length, "événement") + (libre ? ", dans l'ordre du récit" : ", dans l'ordre où ils se sont passés")) : null,
       ),
       evenements.length ? el("button", { type: "button", class: "bouton bouton-petit", "data-action": "nouvel" }, "+ Nouvel événement") : null,
     ),
@@ -201,10 +203,13 @@ function vueTete(evenements) {
 }
 
 function vueVide() {
+  const libre = estModeLibre(etat.roman);
   return el("div", { class: "vide frise-vide" },
     el("p", {}, "Aucun événement pour l'instant."),
-    el("p", { class: "discret" }, "Les événements sont les grands moments de la partie : une rencontre, un combat, une révélation… "
-      + "Ajoute-les dans l'ordre où ils se sont passés, et relie-leur les personnages et les lieux concernés : "
+    el("p", { class: "discret" }, (libre
+      ? "Les événements sont les étapes clés de ton récit : élément déclencheur, rebondissement, révélation… "
+      : "Les événements sont les grands moments de la partie : une rencontre, un combat, une révélation… ")
+      + "Ajoute-les dans l'ordre où ils se déroulent, et relie-leur les personnages et les lieux concernés : "
       + "la frise montrera qui apparaît où."),
     el("button", { type: "button", class: "bouton", "data-action": "nouvel" }, "+ Nouvel événement"),
   );
@@ -216,6 +221,7 @@ function vueEvenement(e, i, total, suivi) {
   const titre = e.titre || "Sans titre";
   const quand = (e.champs?.quand || "").trim();
   const resume = (e.champs?.resume || "").trim();
+  const enjeu = (e.champs?.enjeu || "").trim();
   const personnages = (e.champs?.personnages || []).map(trouverFiche).filter(Boolean);
   const lieux = (e.champs?.lieux || []).map(trouverFiche).filter(Boolean);
   const fleche = (action, symbole, libelle, inactif) =>
@@ -237,6 +243,7 @@ function vueEvenement(e, i, total, suivi) {
       ),
       e.type ? el("span", { class: "statut evt-type", title: e.type }, e.type) : null,
       resume ? el("p", { class: "evt-resume" }, resume) : null,
+      enjeu ? el("p", { class: "evt-enjeu" }, el("strong", {}, "Enjeu : "), enjeu) : null,
       personnages.length || lieux.length
         ? el("div", { class: "pastilles" }, [...personnages, ...lieux].map((f) => pastille(f, suivi)))
         : null,

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'">
 <title>Omni-Romancier</title>
-<meta name="description" content="Écris tes romans tirés des parties de l'Omni-système.">
+<meta name="description" content="Écris tes romans tirés des parties de l'Omni-système ou tes romans libres hors JDR.">
 <meta name="theme-color" content="#14111d">
 <!-- Omni-Romancier n'apparaît pas dans les moteurs de recherche : son adresse se partage directement -->
 <meta name="robots" content="noindex, nofollow">
@@ -97,6 +97,11 @@
       </div>
       <button class="bouton" type="button" id="bouton-nouveau-roman">+ Nouveau roman</button>
     </div>
+    <div class="filtre-modes" id="filtre-modes" role="group" aria-label="Filtrer les romans par mode" hidden>
+      <button type="button" data-filtre="tous" aria-pressed="true">Tous</button>
+      <button type="button" data-filtre="jdr" aria-pressed="false">Roman JDR</button>
+      <button type="button" data-filtre="libre" aria-pressed="false">Roman libre</button>
+    </div>
     <hr class="pointilles">
     <div class="grille-romans" id="liste-romans"></div>
 
@@ -130,10 +135,14 @@
     <aside class="plan" id="plan" aria-label="Plan du roman">
       <a class="retour etiquette" href="#bibliotheque">← Bibliothèque</a>
       <div class="plan-roman">
-        <span class="statut" id="univers-roman"></span>
+        <div class="plan-badges">
+          <span class="statut" id="univers-roman"></span>
+          <span class="badge-mode" id="mode-roman"></span>
+        </div>
         <h1 id="titre-roman"></h1>
         <p class="discret petit" id="mots-roman"></p>
         <span class="plan-liens">
+          <button class="lien-discret" type="button" id="bouton-synopsis" hidden>Synopsis du roman</button>
           <button class="lien-discret" type="button" id="bouton-frise">Frise des événements</button>
           <button class="lien-discret" type="button" id="bouton-remplacer" title="Chercher un mot dans tout le roman, et le remplacer (Ctrl+F, Ctrl+H)">Rechercher et remplacer</button>
           <button class="lien-discret" type="button" id="bouton-orthographe" aria-haspopup="dialog" title="Correction orthographique et dictionnaire personnel">Orthographe et dictionnaire</button>
@@ -186,7 +195,7 @@
           </div>
           <button class="petit-bouton" type="button" id="bouton-imprimer" title="Imprimer, ou enregistrer en PDF (Ctrl+P)">Imprimer / PDF</button>
           <button class="petit-bouton" type="button" id="bouton-concentration" aria-pressed="false" title="Mode concentration (Ctrl+Maj+F)">Concentration</button>
-          <button class="petit-bouton seulement-moyen-ecran" type="button" id="bouton-fiches" aria-controls="panneau" aria-expanded="false">Fiches</button>
+          <button class="petit-bouton" type="button" id="bouton-fiches" aria-controls="panneau" aria-expanded="true">Fiches</button>
           <button class="petit-bouton seulement-moyen-ecran" type="button" id="bouton-recherche-outils" title="Recherche rapide (Ctrl+K)" aria-label="Chercher une fiche">⌕</button>
         </div>
 
@@ -257,7 +266,7 @@
       <div class="panneau-tete">
         <p class="etiquette">Consultation</p>
         <button class="bouton-recherche" type="button" id="bouton-recherche" title="Recherche rapide">⌕ Chercher <kbd>Ctrl K</kbd></button>
-        <button class="petit-bouton seulement-moyen-ecran" type="button" id="fermer-panneau">Fermer</button>
+        <button class="petit-bouton" type="button" id="fermer-panneau" title="Masquer le panneau des fiches" aria-label="Masquer le panneau des fiches">Masquer</button>
       </div>
 
       <!-- Personnages et lieux nommés dans la scène ouverte (mis à jour pendant l'écriture) -->
@@ -295,19 +304,19 @@
         <div>
           <p class="etiquette">À propos</p>
           <h1 id="titre-apropos">Omni-Romancier</h1>
-          <p class="version">version <span id="apropos-version">1.13.0</span><span id="numero-version" hidden></span></p>
+          <p class="version">version <span id="apropos-version">1.14.0</span><span id="numero-version" hidden></span></p>
           <p class="discret petit" id="etat-hors-ligne"></p>
           <p class="apropos-maj"><button class="petit-bouton" type="button" id="bouton-verifier-maj">Vérifier les mises à jour</button></p>
         </div>
       </div>
 
-      <p>Un outil d'écriture pour transformer tes parties de l'Omni-système en romans. Les fiches des personnages, des lieux et des événements restent à portée de main, à côté du texte.</p>
+      <p>Un outil d'écriture pour transformer tes parties de l'Omni-système en romans, ou écrire tes propres romans libres sans lien avec le jeu de rôle. Les fiches des personnages, des lieux et de l'intrigue restent à portée de main, à côté du texte — ou masquées d'un clic.</p>
       <p>Tout reste sur cet appareil : aucun compte, aucun serveur, aucune connexion nécessaire. Pense à exporter tes données régulièrement.</p>
 
       <hr class="pointilles">
 
       <div class="apropos-univers">
-        <p class="etiquette">Les univers</p>
+        <p class="etiquette">Mode Roman JDR — Les univers</p>
         <div class="palette">
           <div class="carte cyber"><h2>Cyberpunk</h2><span class="statut">Néons</span></div>
           <div class="carte fantasy"><h2>Fantasy</h2><span class="statut">Légendes</span></div>
@@ -316,9 +325,21 @@
         </div>
       </div>
 
+      <div class="apropos-univers">
+        <p class="etiquette">Mode Roman libre — Les genres littéraires</p>
+        <div class="palette">
+          <div class="carte genre-contemporain"><h2>Contemporain</h2><span class="statut">Quotidien</span></div>
+          <div class="carte genre-policier"><h2>Policier / Thriller</h2><span class="statut">Suspense</span></div>
+          <div class="carte genre-imaginaire"><h2>Imaginaire</h2><span class="statut">Mondes</span></div>
+          <div class="carte genre-historique"><h2>Historique</h2><span class="statut">Époques</span></div>
+          <div class="carte genre-romance"><h2>Romance</h2><span class="statut">Passions</span></div>
+        </div>
+      </div>
+
       <ul class="losanges losanges-omni">
+        <li>Choisir pour chaque roman entre le mode <em>Roman JDR</em> (univers de l'Omni-système) et le mode <em>Roman libre</em> (genres littéraires, synopsis, fiches d'arcs narratifs et d'intrigue)</li>
         <li>Écrire en mode <em>Notes</em> ou <em>Rédigé</em>, ou les deux côte à côte</li>
-        <li>Consulter une fiche sans quitter le texte (<span class="mono">Ctrl+K</span>)</li>
+        <li>Afficher ou masquer le panneau des fiches selon ton besoin, et consulter une fiche sans quitter le texte (<span class="mono">Ctrl+K</span>)</li>
         <li>Voir d'un coup d'œil les personnages et lieux nommés dans la scène, en couleur dans le texte</li>
         <li>Retrouver, depuis une fiche, chaque scène où le personnage ou le lieu est nommé</li>
         <li>Rechercher un mot dans tout le roman, et le remplacer partout d'un coup (<span class="mono">Ctrl+F</span>)</li>

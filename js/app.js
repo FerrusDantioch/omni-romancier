@@ -4,7 +4,7 @@
 // =====================================================================
 
 import * as db from "./db.js";
-import { UNIVERS } from "./outils.js";
+import { modeDuRoman, themeDuRoman } from "./outils.js";
 import { informer } from "./dialogues.js";
 import { initialiserBibliotheque, afficherBibliotheque } from "./bibliotheque.js";
 import { initialiserSauvegarde, mettreAJourEtat } from "./sauvegarde.js";
@@ -28,7 +28,7 @@ import { initialiserSurlignage } from "./surlignage.js";
 import { initialiserFrise, montrerFrise, revenirDeLaFrise, oublierFrise, friseAffichee } from "./frise.js";
 
 // Numéro de version affiché dans « À propos »
-export const VERSION = self.CONFIG_APP?.version || "1.13.0";
+export const VERSION = self.CONFIG_APP?.version || "1.14.0";
 
 // Tous les fichiers de l'application se sont chargés ensemble (voir alerteDemarrage dans index.html)
 window.applicationChargee = true;
@@ -49,8 +49,8 @@ function montrer(nom) {
 }
 
 // Change la couleur d'accent de toute l'interface (liseré, étiquettes, puces)
-function colorerUnivers(univers) {
-  document.documentElement.dataset.univers = UNIVERS[univers] ? univers : "autre";
+function colorerUnivers(cle) {
+  document.documentElement.dataset.univers = cle || "autre";
 }
 
 // Les changements de page se font l'un après l'autre, jamais deux en même temps
@@ -94,6 +94,7 @@ async function suivreAdresse() {
   fermerRoman();
   document.body.classList.remove("mode-ecriture");
   colorerUnivers("autre");
+  delete document.documentElement.dataset.modeRoman;
   document.title = "Omni-Romancier";
   if (page === "apropos") {
     montrer("apropos");
@@ -117,7 +118,8 @@ async function ouvrirRoman(romanId) {
     location.hash = "bibliotheque";
     return false;
   }
-  colorerUnivers(roman.univers);
+  colorerUnivers(themeDuRoman(roman).cle);
+  document.documentElement.dataset.modeRoman = modeDuRoman(roman);
   document.title = roman.titre + " — Omni-Romancier";
   document.body.classList.add("mode-ecriture");
   montrer("roman");

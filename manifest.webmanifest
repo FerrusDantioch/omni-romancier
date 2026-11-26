@@ -1,7 +1,7 @@
 {
   "name": "Omni-Romancier",
   "short_name": "Omni-Romancier",
-  "description": "Écris tes romans tirés de tes parties de l'Omni-système. Fonctionne hors ligne.",
+  "description": "Écris tes romans tirés de tes parties de l'Omni-système ou tes romans libres hors JDR. Fonctionne hors ligne.",
   "id": "/omni-romancier/",
   "start_url": "./",
   "scope": "./",

@@ -1,6 +1,6 @@
 # Omni-Romancier
 
-**Omni-Romancier** est une application web installable (PWA) d'écriture de romans tirés des parties de l'**Omni-système**. Elle fonctionne **100 % localement**, **hors ligne**, **sans compte** et **sans traceur** : tes romans, fiches et brouillons restent sur ton appareil dans le navigateur (**IndexedDB**).
+**Omni-Romancier** est une application web installable (PWA) d'écriture de romans : elle permet aussi bien d'écrire des romans tirés des parties de l'**Omni-système** (mode *Roman JDR*) que des romans indépendants du jeu de rôle (mode *Roman libre*). Elle fonctionne **100 % localement**, **hors ligne**, **sans compte** et **sans traceur** : tes romans, fiches et brouillons restent sur ton appareil dans le navigateur (**IndexedDB**).
 
 Application de l'écosystème **Omni-Système** :
 - **Ouvrir l'application :** <https://ferrusdantioch.github.io/omni-romancier/>
@@ -11,11 +11,13 @@ Application de l'écosystème **Omni-Système** :
 
 ## 1. Ce que fait Omni-Romancier
 
-- **Bibliothèque par univers** : range tes romans par univers (*Cyberpunk*, *Fantasy*, *Space opéra*, *Horreur / enquête*, *Autre*), chacun habillant l'interface de sa couleur.
+- **Deux modes d'écriture par roman** (filtre *Tous / Roman JDR / Roman libre* dans la bibliothèque, conversion possible sans perte de données) :
+  - **Mode Roman JDR** : range tes romans par univers (*Cyberpunk*, *Fantasy*, *Space opéra*, *Horreur / enquête*, *Autre*), avec des fiches adaptées aux parties (*Principal*, *PNJ*, *Lieux*, *Événements* et *Frise des événements*).
+  - **Mode Roman libre (hors JDR)** : choisis un genre littéraire coloré (*Contemporain*, *Policier / Thriller*, *Imaginaire*, *Historique*, *Romance*, *Autre*), rédige un **synopsis / pitch** et profite de fiches littéraires enrichies (*Principaux* avec objectif et arc narratif, *Secondaires*, *Lieux* avec rôle dans le récit, *Intrigue* avec enjeu et conséquences).
 - **Écriture structurée** : organise chaque roman en chapitres et scènes, avec deux versions par scène (*Notes* pour les fragments et puces, *Rédigé* pour le texte du roman) ou **les deux côte à côte** sur écran large.
   - Mise en forme légère (`*italique*`, `**gras**`, séparateur `* * *`, saut de page `Ctrl+Entrée`).
   - Compteurs de mots en temps réel (scène, chapitre, roman), objectif de session et mode concentration (`Ctrl+Maj+F`).
-- **Fiches à portée de main** : personnages principaux (jusqu'à deux épinglés côte à côte), PNJ, lieux et événements.
+- **Fiches à portée de main (et panneau masquable)** : personnages principaux (jusqu'à deux épinglés côte à côte), PNJ ou personnages secondaires, lieux et événements. Le panneau de consultation peut être masqué sur grand écran pour élargir la zone d'écriture.
   - **Recherche rapide (`Ctrl+K`)** : ouvre n'importe quelle fiche à côté du texte sans déplacer ton curseur.
   - **Repérage automatique** : bloc *Dans cette scène*, noms soulignés en couleur dans le texte et liste *Nommé dans ces scènes* sur chaque fiche.
   - **Frise des événements** : visualise toute la partie sur une ligne du temps et repère *Qui apparaît où*.

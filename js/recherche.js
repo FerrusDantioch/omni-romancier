@@ -8,16 +8,18 @@
 // arrive, on remet tout à l'identique.
 // =====================================================================
 
-import { el } from "./outils.js";
+import { el, estModeLibre } from "./outils.js";
 import { etat, trouverFiche, estEpinglee } from "./etat.js";
-import { CATEGORIES, ouvrirFiche, creerFiche, basculerVolet } from "./panneau.js";
+import { categorieDe, ouvrirFiche, creerFiche, assurerPanneauVisible } from "./panneau.js";
 import { revenirAuTexte, quitterConcentration } from "./editeur.js";
 
 const MAX_RESULTATS = 8;
 // Ordre d'affichage des catégories, à score égal
 const ORDRE_CATEGORIES = ["principal", "pnj", "lieu", "evenement"];
 // Catégories proposées à la création quand le nom n'existe pas encore
-const CREATIONS = [["pnj", "Créer un PNJ"], ["lieu", "Créer un lieu"]];
+const creationsDuMode = () => (estModeLibre(etat.roman)
+  ? [["pnj", "Créer un personnage secondaire"], ["lieu", "Créer un lieu"]]
+  : [["pnj", "Créer un PNJ"], ["lieu", "Créer un lieu"]]);
 
 let dialogue, saisie, liste;
 let resultats = [];       // ce qui est affiché
@@ -179,7 +181,7 @@ function chercher() {
     // Le nom tapé n'existe pas exactement : on propose de créer la fiche
     const existe = etat.fiches.some((f) => normaliser(f.titre) === normaliser(requete));
     if (!existe) {
-      for (const [categorie, libelle] of CREATIONS) resultats.push({ creer: categorie, libelle, titre: requete });
+      for (const [categorie, libelle] of creationsDuMode()) resultats.push({ creer: categorie, libelle, titre: requete });
     }
   }
   if (choix >= resultats.length) choix = 0;
@@ -215,7 +217,7 @@ function afficher(requete) {
     const f = r.fiche;
     const detail = f.categorie === "evenement" ? f.champs?.quand : f.type;
     liste.append(el("li", { id, role: "option", class: "resultat", "data-index": i },
-      el("span", { class: "resultat-categorie" }, CATEGORIES[f.categorie].nom),
+      el("span", { class: "resultat-categorie" }, categorieDe(f.categorie).nom),
       el("span", { class: "resultat-titre" }, surligner(f.titre || "Sans nom", requete)),
       detail ? el("span", { class: "resultat-detail" }, detail) : null,
       estEpinglee(f.id) ? el("span", { class: "resultat-epingle", title: "Épinglée" }, "📌") : null,
@@ -277,7 +279,7 @@ async function choisir(index, { modifier = false } = {}) {
 
   // Pour voir la fiche, le panneau doit être visible
   quitterConcentration();
-  if (getComputedStyle($("panneau")).position === "fixed") basculerVolet(true); // écran moyen ou petit : on ouvre le volet
+  assurerPanneauVisible();
 
   let fiche;
   if (r.creer) {

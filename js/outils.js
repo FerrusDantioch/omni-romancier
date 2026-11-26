@@ -4,6 +4,20 @@
 
 import { masquerSauts } from "../commun/saut-de-page.js";
 
+// Les modes d'écriture d'un roman
+export const MODES_ROMAN = {
+  jdr: {
+    nom: "Roman JDR",
+    badge: "JDR",
+    description: "Tiré d'une partie de l'Omni-système (univers, PNJ, événements).",
+  },
+  libre: {
+    nom: "Roman libre",
+    badge: "Hors JDR",
+    description: "Roman indépendant du JDR (genre littéraire, synopsis, arcs narratifs).",
+  },
+};
+
 // Les univers de l'Omni-système (la clé sert dans le code et dans theme.css)
 export const UNIVERS = {
   cyber:   { nom: "Cyberpunk" },
@@ -12,6 +26,34 @@ export const UNIVERS = {
   horreur: { nom: "Horreur / enquête" },
   autre:   { nom: "Autre" },
 };
+
+// Les genres littéraires du mode Roman libre (la clé sert dans le code et dans theme.css)
+export const GENRES = {
+  contemporain: { nom: "Contemporain" },
+  policier:     { nom: "Policier / Thriller" },
+  imaginaire:   { nom: "Imaginaire" },
+  historique:   { nom: "Historique" },
+  romance:      { nom: "Romance" },
+  autre:        { nom: "Autre" },
+};
+
+export function modeDuRoman(roman) {
+  return roman && roman.mode === "libre" ? "libre" : "jdr";
+}
+
+export function estModeLibre(roman) {
+  return modeDuRoman(roman) === "libre";
+}
+
+// Clé CSS et nom affiché du thème (univers en JDR, genre en Roman libre)
+export function themeDuRoman(roman) {
+  if (estModeLibre(roman)) {
+    const genre = GENRES[roman?.genre] ? roman.genre : "autre";
+    return { cle: genre === "autre" ? "autre" : "genre-" + genre, nom: GENRES[genre].nom, genre };
+  }
+  const univers = UNIVERS[roman?.univers] ? roman.univers : "autre";
+  return { cle: univers, nom: UNIVERS[univers].nom, univers };
+}
 
 // Fabrique un identifiant unique (ex. « 3f2b…-… »)
 export function nouvelId() {

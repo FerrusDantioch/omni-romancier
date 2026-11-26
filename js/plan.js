@@ -4,7 +4,9 @@
 // =====================================================================
 
 import * as db from "./db.js";
-import { el, nouvelId, nombre, pluriel, UNIVERS, ecrireTexte, majInertVolets } from "./outils.js";
+import {
+  el, nouvelId, nombre, pluriel, MODES_ROMAN, modeDuRoman, estModeLibre, themeDuRoman, ecrireTexte, majInertVolets,
+} from "./outils.js";
 import { ouvrirDialogue, confirmer, informer } from "./dialogues.js";
 import {
   etat, chapitresTries, scenesDe, trouverScene, trouverChapitre, scenesDansLOrdre,
@@ -38,6 +40,7 @@ function basculerPlan(forcer) {
 
 export function initialiserPlan() {
   document.getElementById("bouton-ajout-chapitre").addEventListener("click", ajouterChapitre);
+  document.getElementById("bouton-synopsis").addEventListener("click", ouvrirSynopsis);
   // Un seul « écouteur » pour tous les boutons du plan (data-action="...")
   document.getElementById("plan-liste").addEventListener("click", (e) => {
     const bouton = e.target.closest("[data-action]");
@@ -54,12 +57,15 @@ export function initialiserPlan() {
   const vue = document.getElementById("vue-roman");
   // Les boutons « ☰ Plan » et « Fiches » disent si leur volet est ouvert (lecteurs d'écran),
   // quelle que soit la façon dont il s'ouvre ou se ferme
-  new MutationObserver(() => {
+  const majAriaVolets = () => {
     document.getElementById("bouton-plan").setAttribute("aria-expanded", String(vue.classList.contains("plan-ouvert")));
-    document.getElementById("bouton-fiches").setAttribute("aria-expanded", String(vue.classList.contains("panneau-ouvert")));
+    const volet = matchMedia("(max-width: 1100px)").matches;
+    const fichesVisibles = volet ? vue.classList.contains("panneau-ouvert") : !vue.classList.contains("panneau-masque");
+    document.getElementById("bouton-fiches").setAttribute("aria-expanded", String(fichesVisibles));
     majInertVolets();
-  }).observe(vue, { attributes: true, attributeFilter: ["class", "hidden"] });
-  window.addEventListener("resize", majInertVolets);
+  };
+  new MutationObserver(majAriaVolets).observe(vue, { attributes: true, attributeFilter: ["class", "hidden"] });
+  window.addEventListener("resize", majAriaVolets);
   document.getElementById("bouton-plan").addEventListener("click", () => basculerPlan());
   // Toucher le voile sombre (à côté d'un volet) referme les volets ; Échap referme le plan
   vue.addEventListener("click", (e) => {
@@ -82,8 +88,20 @@ export function initialiserPlan() {
 
 export function afficherPlan() {
   const roman = etat.roman;
+  const mode = modeDuRoman(roman);
+  const libre = estModeLibre(roman);
+  const theme = themeDuRoman(roman);
   document.getElementById("titre-roman").textContent = roman.titre;
-  document.getElementById("univers-roman").textContent = (UNIVERS[roman.univers] || UNIVERS.autre).nom;
+  document.getElementById("univers-roman").textContent = theme.nom;
+  const badgeMode = document.getElementById("mode-roman");
+  if (badgeMode) {
+    badgeMode.textContent = MODES_ROMAN[mode].badge;
+    badgeMode.className = "badge-mode badge-mode-" + mode;
+  }
+  const boutonSynopsis = document.getElementById("bouton-synopsis");
+  if (boutonSynopsis) boutonSynopsis.hidden = !libre && !(roman.synopsis || "").trim();
+  const boutonFrise = document.getElementById("bouton-frise");
+  if (boutonFrise) boutonFrise.textContent = libre ? "Frise de l'intrigue" : "Frise des événements";
   majTotal();
 
   const liste = document.getElementById("plan-liste");
@@ -373,4 +391,31 @@ async function apresChangement() {
   await db.ecrire("romans", etat.roman);
   afficherPlan();
   annoncer("plan-change");
+}
+
+// Consulter et modifier le synopsis / pitch du roman
+async function ouvrirSynopsis() {
+  if (!etat.roman) return;
+  const reponse = await ouvrirDialogue({
+    titre: "Synopsis du roman",
+    corps: [
+      el("label", { class: "champ" },
+        el("span", { class: "etiquette" }, "Synopsis / Pitch"),
+        el("textarea", {
+          name: "synopsis", rows: 6, maxlength: 2000, lang: "fr", spellcheck: "true",
+          placeholder: "Résume l'idée directrice, l'enjeu ou la trame du roman…",
+        }, etat.roman.synopsis || ""),
+      ),
+      el("p", { class: "discret petit" }, "Affiché dans la bibliothèque et ajouté au début de l'annexe des fiches à l'export."),
+    ],
+    ok: "Enregistrer",
+    lireFormulaire: (form) => ({ synopsis: (form.elements.synopsis.value || "").trim() }),
+  });
+  if (!reponse) return;
+  etat.roman.synopsis = reponse.synopsis;
+  etat.roman.modifie = Date.now();
+  await db.ecrire("romans", etat.roman);
+  const boutonSynopsis = document.getElementById("bouton-synopsis");
+  if (boutonSynopsis) boutonSynopsis.hidden = !estModeLibre(etat.roman) && !etat.roman.synopsis;
+  informer("Synopsis enregistré.");
 }

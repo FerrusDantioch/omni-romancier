@@ -1,29 +1,29 @@
 # Omni-Romancier
 
-Application d'écriture de romans tirés des parties de l'Omni-système.
+Application d'écriture de romans tirés des parties de l'Omni-système, ou de romans libres sans lien avec le jeu de rôle.
 Elle s'installe comme une application, fonctionne **sans connexion**, et garde tout sur l'appareil
 (ordinateur ou téléphone).
 
-**Version 1.13.0** — les sept étapes prévues sont terminées, plus l'étape 8 (les fiches repérées dans le texte),
+**Version 1.14.0** — les sept étapes prévues sont terminées, plus l'étape 8 (les fiches repérées dans le texte),
 l'étape 9 (écrire sur deux appareils : la fusion), l'étape 10 (la frise des événements),
 l'étape 11 (les noms en couleur dans le texte), l'étape 12 (les notes à côté du texte rédigé),
 l'étape 13 (sur chaque fiche, les scènes où elle est nommée), l'étape 14 (l'export en ePub et en Word),
-l'étape 15 (rechercher et remplacer dans tout le roman) et l'étape 16 (les notes et les fiches dans
-l'export, et deux personnages principaux épinglés côte à côte).
+l'étape 15 (rechercher et remplacer dans tout le roman), l'étape 16 (les notes et les fiches dans
+l'export, et deux personnages principaux épinglés côte à côte) et l'étape 17 (le mode **Roman libre**
+hors JDR avec genres littéraires, synopsis, fiches enrichies, filtre de bibliothèque et panneau masquable).
 
 **En ligne : https://ferrusdantioch.github.io/omni-romancier/** — s'ouvre aussi sur téléphone,
 sans rien installer d'autre (voir « Omni-Romancier en ligne » plus bas).
 
 ## En bref : ce que fait Omni-Romancier
 
-- **Bibliothèque** de romans, chacun dans un univers (Cyberpunk, Fantasy, Space opéra,
-  Horreur / enquête, Autre) dont la couleur habille l'interface.
+- **Bibliothèque** de romans avec filtre *Tous / Roman JDR / Roman libre* : chaque roman choisit son mode (modifiable à tout moment sans rien perdre) et sa couleur d'interface — un **univers** en mode *Roman JDR* (Cyberpunk, Fantasy, Space opéra, Horreur / enquête, Autre) ou un **genre littéraire** en mode *Roman libre* (Contemporain, Policier / Thriller, Imaginaire, Historique, Romance, Autre), avec un **synopsis / pitch** facultatif.
 - **Écriture** en chapitres et scènes, chaque scène en deux versions : *Notes* (fragments, puces)
   et *Rédigé* (le texte du roman), ou **les deux côte à côte** sur un écran assez large.
   Mise en forme `*italique*`, `**gras**`, séparateur `* * *`, **saut de page**.
   Compteurs de mots, objectif de session, mode concentration.
-- **Fiches** à côté du texte : un ou deux personnages principaux (épinglés), PNJ, lieux, événements dans l'ordre.
-- **Frise des événements** : toute la partie sur une ligne du temps, et d'un coup d'œil, qui apparaît où.
+- **Fiches** à côté du texte (panneau masquable d'un clic sur grand écran) : un ou deux personnages principaux (épinglés), PNJ ou personnages secondaires, lieux, événements / intrigue dans l'ordre — avec en mode *Roman libre* les objectifs, l'arc narratif, le rôle du lieu et l'enjeu des événements.
+- **Frise des événements / de l'intrigue** : tout le récit sur une ligne du temps, et d'un coup d'œil, qui apparaît où.
 - **`Ctrl+K`** : on tape un nom, la fiche s'ouvre à côté, **le curseur ne bouge pas**.
 - **Dans cette scène** : les personnages et lieux nommés dans la scène s'affichent d'eux-mêmes
   à côté du texte, prêts à être consultés d'un clic.
@@ -214,12 +214,18 @@ Ouvre un roman depuis la Bibliothèque. L'écran se divise en trois colonnes :
 
 ## Consulter et modifier les fiches (colonne de droite)
 
-- **4 onglets** : Principal (un ou deux personnages principaux), PNJ, Lieux, Événements.
+Sur grand écran, le bouton **« Masquer »** (en haut du panneau) replie la colonne des fiches pour élargir l'écriture ; le bouton **« Fiches »** (dans la barre d'outils) la réaffiche, et `Ctrl+K` ou un clic sur un nom souligné la rouvre d'eux-mêmes.
+
+- **4 onglets** :
+  - en mode **Roman JDR** : Principal (un ou deux personnages principaux), PNJ, Lieux, Événements ;
+  - en mode **Roman libre** : Principaux, Secondaires, Lieux, Intrigue.
   « + Nouveau… » crée une fiche ; « ✎ Modifier » ouvre le formulaire ; tout s'enregistre seul ;
   « Terminé » revient à la lecture.
-- **Champs** : personnages → autres noms, apparence, caractère, background, relations ;
-  lieux → autres noms, description, ambiance ; événements → date ou moment, résumé, personnages et lieux concernés.
-  Chaque fiche a aussi un **type** libre (allié, taverne…) et des **notes libres**.
+- **Champs** :
+  - personnages → autres noms, apparence, caractère, background (ou passé / parcours), relations — plus *Objectif & motivations* et *Arc narratif* (ou *Rôle & objectif* pour les personnages secondaires) en mode *Roman libre* ;
+  - lieux → autres noms, description, ambiance — plus *Rôle dans le récit* en mode *Roman libre* ;
+  - événements → date ou moment, résumé, personnages et lieux concernés — plus *Enjeu & conséquences* en mode *Roman libre*.
+  Chaque fiche a aussi un **type** libre (allié, antagoniste, taverne…) et des **notes libres**.
 - **Dans cette scène** (en haut du panneau) : les personnages et lieux de tes fiches qui sont nommés
   dans la scène ouverte (notes et texte rédigé), dans l'ordre où ils apparaissent. La liste se met à
   jour pendant que tu écris. Un clic ouvre la fiche, **le curseur reste dans le texte**.

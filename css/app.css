@@ -122,6 +122,11 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
 .carte.space{ --c:var(--space); }
 .carte.horreur{ --c:var(--horreur); --c-texte:var(--horreur-texte); }
 .carte.autre{ --c:var(--autre); }
+.carte.genre-contemporain{ --c:var(--genre-contemporain); }
+.carte.genre-policier{     --c:var(--genre-policier); --c-texte:var(--genre-policier-texte); }
+.carte.genre-imaginaire{   --c:var(--genre-imaginaire); }
+.carte.genre-historique{   --c:var(--genre-historique); }
+.carte.genre-romance{      --c:var(--genre-romance); }
 
 /* Étiquette arrondie à contour fin (« JOUABLE », « EN TEST »…) */
 .statut{
@@ -184,7 +189,35 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
 .vue-tete{ display:flex; align-items:flex-end; justify-content:space-between; gap:var(--esp-4); flex-wrap:wrap; }
 
 /* ---------- Bibliothèque ---------- */
+.filtre-modes{
+  display:inline-flex; flex-wrap:wrap; gap:2px; margin-top:var(--esp-4); padding:3px;
+  border:var(--filet) solid var(--trait); border-radius:var(--arrondi-pilule);
+}
+.filtre-modes button{
+  min-width:44px; min-height:44px;
+  font:600 .85rem var(--f-titre); color:var(--discret);
+  background:none; border:0; border-radius:var(--arrondi-pilule);
+  padding:6px 14px; cursor:pointer;
+}
+.filtre-modes button:hover{ color:var(--texte); }
+.filtre-modes button[aria-pressed="true"]{ background:var(--omni); color:var(--sur-accent); }
 .grille-romans{ display:grid; grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr)); gap:var(--esp-5); }
+.roman-carte-meta, .plan-badges{ display:flex; align-items:center; flex-wrap:wrap; gap:var(--esp-2); }
+.badge-mode{
+  font:600 .66rem var(--f-titre); letter-spacing:.08em; text-transform:uppercase;
+  color:var(--discret);
+  border:var(--filet) solid var(--trait); border-radius:var(--arrondi-pilule);
+  padding:3px 9px; white-space:nowrap;
+}
+.badge-mode-libre{
+  color:var(--texte);
+  border-color:color-mix(in srgb, var(--univers) 45%, var(--trait));
+  background:color-mix(in srgb, var(--univers) 10%, transparent);
+}
+.roman-carte-synopsis{
+  font-size:.88rem; color:var(--discret); line-height:1.45;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
 .roman-carte .statut{ --c:inherit; color:var(--c-texte, var(--c)); border-color:color-mix(in srgb, var(--c) 55%, transparent); }
 .titre-roman{ color:var(--texte); text-decoration:none; }
 .titre-roman:hover{ color:var(--halo); }
@@ -264,6 +297,24 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
 .option-export:has(> span > b){ align-items:baseline; }
 .option-export-chapitre{ display:flex; align-items:center; gap:var(--esp-2); flex-wrap:wrap; }
 .option-export-chapitre select{ flex:1 1 12em; min-width:0; }
+/* Choix du mode d'écriture (JDR / Roman libre) */
+.choix-mode{ border:0; padding:0; margin:0; display:grid; grid-template-columns:1fr; gap:var(--esp-2); }
+@media (min-width:440px){ .choix-mode{ grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+.choix-mode legend{ margin-bottom:var(--esp-2); padding:0; }
+.option-mode{
+  display:flex; align-items:flex-start; gap:var(--esp-2);
+  padding:10px 12px; cursor:pointer;
+  background:var(--nuit);
+  border:var(--filet) solid var(--trait); border-left:var(--liseré) solid var(--omni);
+  border-radius:var(--arrondi-petit);
+}
+.option-mode input{ accent-color:var(--omni); margin:4px 0 0; flex:none; }
+.option-mode-texte{ display:grid; gap:2px; min-width:0; }
+.option-mode-texte strong{ font:700 .92rem var(--f-titre); color:var(--texte); }
+.option-mode-texte small{ font-size:.8rem; line-height:1.35; color:var(--discret); }
+.option-mode:has(input:checked){ border-color:var(--omni); background:color-mix(in srgb, var(--omni) 10%, var(--nuit)); }
+.champ textarea[name="synopsis"]{ resize:vertical; min-height:4.5em; line-height:1.5; }
+
 /* Choix de l'univers : petites cartes avec liseré de couleur */
 .choix-univers{ border:0; padding:0; margin:0; display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:var(--esp-2); }
 .choix-univers legend{ margin-bottom:var(--esp-2); padding:0; }
@@ -279,6 +330,11 @@ select:focus-visible, textarea:focus-visible, summary:focus-visible{
 .option-univers.cyber{ --c:var(--cyber); } .option-univers.fantasy{ --c:var(--fantasy); }
 .option-univers.space{ --c:var(--space); } .option-univers.horreur{ --c:var(--horreur); }
 .option-univers.autre{ --c:var(--autre); }
+.option-univers.genre-contemporain{ --c:var(--genre-contemporain); }
+.option-univers.genre-policier{ --c:var(--genre-policier); }
+.option-univers.genre-imaginaire{ --c:var(--genre-imaginaire); }
+.option-univers.genre-historique{ --c:var(--genre-historique); }
+.option-univers.genre-romance{ --c:var(--genre-romance); }
 .option-univers input{ accent-color:var(--c); margin:0; }
 .option-univers:has(input:checked){ border-color:var(--c); background:color-mix(in srgb, var(--c) 10%, var(--nuit)); }
 
@@ -896,6 +952,13 @@ body.concentration .sortie-concentration:focus-visible{ opacity:1; }
 
 .seulement-petit-ecran, .seulement-moyen-ecran{ display:none; }
 
+/* Grand écran : possibilité de masquer le panneau des fiches pour élargir l'écriture */
+@media (min-width:1101px){
+  .vue-ecriture.panneau-masque{ grid-template-columns:var(--largeur-plan) minmax(0,1fr); }
+  .vue-ecriture.panneau-masque .panneau{ display:none; }
+  .vue-ecriture.panneau-masque #bouton-recherche-outils{ display:inline-flex; }
+}
+
 /* Écran moyen : le panneau de consultation devient un volet (bouton « Fiches ») */
 @media (max-width:1100px){
   .vue-ecriture{ grid-template-columns:var(--largeur-plan) minmax(0,1fr); }
@@ -1029,6 +1092,10 @@ body.concentration .sortie-concentration:focus-visible{ opacity:1; }
 .evt-carte .pastille{ max-width:100%; overflow-wrap:anywhere; text-align:left; }
 .frise-suivi p{ min-width:0; overflow-wrap:anywhere; }
 .evt-resume{ font-size:.95rem; line-height:1.55; color:var(--ecriture-texte); white-space:pre-wrap; overflow-wrap:anywhere; }
+.evt-enjeu{
+  font-size:.88rem; line-height:1.5; color:var(--discret); white-space:pre-wrap; overflow-wrap:anywhere;
+  border-left:2px solid color-mix(in srgb, var(--univers) 50%, transparent); padding-left:var(--esp-2);
+}
 /* Écran assez large : la date ou le moment passe à gauche de la ligne */
 @media (min-width:700px){
   .evt{ grid-template-columns:9rem 30px minmax(0,1fr); grid-template-areas:"quand repere carte"; }
