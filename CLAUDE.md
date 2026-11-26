@@ -26,7 +26,7 @@ PWA d'écriture de romans tirés des parties de l'écosystème **Omni-Système**
 
 ## 2. Version, Service Worker et invariants de stockage
 
-- **Source unique de version** : `js/config.js` (`CONFIG_APP.version`, actuellement `'1.14.0'`).
+- **Source unique de version** : `js/config.js` (`CONFIG_APP.version`, actuellement `'1.14.1'`).
   - `sw.js` importe `js/config.js` via `importScripts('js/config.js')` pour construire le cache applicatif versionné (ex. `'omni-romancier-app-v' + self.CONFIG_APP.version`).
   - **Cache dictionnaire séparé** : le dictionnaire français (`correcteur/mots-fr-7.5.txt`, ~2 Mo) est conservé dans un cache dédié (ex. `'omni-romancier-dico-v1'`) afin d'éviter de le retélécharger à chaque mise à jour de l'application.
   - Tout nouveau fichier applicatif ou ressource runtime (`.css`, `.js`, `.woff2`, `assets/*.png`, `correcteur/*`, `commun/*`, licences `.txt`) doit être ajouté dans `sw.js` (`FICHIERS` / `DICTIONNAIRE`), puis incrémenter `version` dans `js/config.js`.

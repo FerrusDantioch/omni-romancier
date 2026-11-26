@@ -207,7 +207,9 @@ function lireRoman(form, romanExistant = null) {
   const mode = form.elements.mode.value;
   if (!titre) return "Donne un titre à ton roman.";
   if (!MODES_ROMAN[mode]) return "Choisis un mode d'écriture.";
-  const synopsis = (form.elements.synopsis?.value || "").trim();
+  const champSynopsis = form.elements.synopsis;
+  const synopsisVisible = champSynopsis && !champSynopsis.closest(".champ")?.hidden;
+  const synopsis = synopsisVisible ? champSynopsis.value.trim() : (romanExistant?.synopsis || "").trim();
 
   if (mode === "libre") {
     const genre = form.elements.genre.value;

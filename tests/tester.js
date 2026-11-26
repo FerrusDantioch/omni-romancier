@@ -39,9 +39,15 @@ lancer('Omni-Romancier', async () => {
   await section('Créer un roman', async () => {
     await p.click('#bouton-nouveau-roman');
     await p.fill('dialog[open] input[name="titre"]', 'Les Brumes de Valombre');
+    // Aller-retour libre -> jdr avec saisie dans le synopsis masqué : ne doit pas être enregistré
+    await p.check('dialog[open] input[name="mode"][value="libre"]');
+    await p.fill('dialog[open] textarea[name="synopsis"]', 'Brouillon ignoré');
+    await p.check('dialog[open] input[name="mode"][value="jdr"]');
     await p.click('dialog[open] button[type="submit"]');
     await p.waitForTimeout(500);
-    verifier((await texte(p, '#liste-romans')).includes('Les Brumes de Valombre'), 'le roman apparaît dans la bibliothèque');
+    const txtListe = await texte(p, '#liste-romans');
+    verifier(txtListe.includes('Les Brumes de Valombre'), 'le roman apparaît dans la bibliothèque');
+    verifier(!txtListe.includes('Brouillon ignoré'), 'un synopsis saisi puis masqué avant validation n’est pas enregistré');
   });
 
   await section('Écrire une scène', async () => {
@@ -248,6 +254,14 @@ lancer('Omni-Romancier', async () => {
     await p.waitForTimeout(400);
     const estReaffiche = await p.$eval('#vue-roman', (e) => !e.classList.contains('panneau-masque'));
     verifier(estReaffiche, 'ouvrir ou créer une fiche via Ctrl+K réaffiche automatiquement le panneau');
+
+    // Mode concentration puis sortie sur grand écran : aria-expanded rétabli
+    await p.click('#bouton-concentration');
+    await p.waitForTimeout(150);
+    await p.click('#sortie-concentration');
+    await p.waitForTimeout(150);
+    const expandedApres = await p.getAttribute('#bouton-fiches', 'aria-expanded');
+    verifier(expandedApres === 'true', 'quitter le mode concentration rétablit aria-expanded="true" sur #bouton-fiches', expandedApres);
 
     // Événement d'intrigue avec enjeu visible sur la frise
     await p.click('#onglet-evenement');

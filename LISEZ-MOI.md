@@ -4,7 +4,7 @@ Application d'écriture de romans tirés des parties de l'Omni-système, ou de r
 Elle s'installe comme une application, fonctionne **sans connexion**, et garde tout sur l'appareil
 (ordinateur ou téléphone).
 
-**Version 1.14.0** — les sept étapes prévues sont terminées, plus l'étape 8 (les fiches repérées dans le texte),
+**Version 1.14.1** — les sept étapes prévues sont terminées, plus l'étape 8 (les fiches repérées dans le texte),
 l'étape 9 (écrire sur deux appareils : la fusion), l'étape 10 (la frise des événements),
 l'étape 11 (les noms en couleur dans le texte), l'étape 12 (les notes à côté du texte rédigé),
 l'étape 13 (sur chaque fiche, les scènes où elle est nommée), l'étape 14 (l'export en ePub et en Word),

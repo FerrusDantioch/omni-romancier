@@ -13,7 +13,7 @@
 // « Corbeau » repère Mère Corbeau, « un corbeau » non.
 // =====================================================================
 
-import { el, ecrireTexte } from "./outils.js";
+import { el, ecrireTexte, modeDuRoman } from "./outils.js";
 import { masquerSauts } from "../commun/saut-de-page.js";
 import { etat, ecouter } from "./etat.js";
 import { categorieDe, estTitreParDefaut, ouvrirFiche } from "./panneau.js";
@@ -86,7 +86,8 @@ export function majReperage() {
   }
   const trouvees = fichesDeLaScene(scene, { notes: $("texte-notes").value, texte: $("texte-redige").value });
   majBouton(trouvees.length);
-  const affichage = trouvees.map((f) => f.id + "\u0001" + f.titre + "\u0001" + f.type).join("\u0002") || "aucune";
+  const affichage = modeDuRoman(etat.roman) + "\u0003"
+    + (trouvees.map((f) => f.id + "\u0001" + f.titre + "\u0001" + f.type).join("\u0002") || "aucune");
   if (!zone.hidden && affichage === dernierAffichage) return;
   dernierAffichage = affichage;
   zone.hidden = false;

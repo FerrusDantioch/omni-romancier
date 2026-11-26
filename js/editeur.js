@@ -673,10 +673,15 @@ export function quitterConcentration() {
 
 function basculerConcentration(forcer) {
   const actif = document.body.classList.toggle("concentration", forcer);
+  const vue = $("vue-roman");
   // Les volets (plan, fiches) se referment : sinon leur voile sombre resterait sur le texte
   if (actif) {
-    $("vue-roman").classList.remove("plan-ouvert", "panneau-ouvert");
+    vue.classList.remove("plan-ouvert", "panneau-ouvert");
     $("bouton-fiches").setAttribute("aria-expanded", "false");
+  } else {
+    const volet = matchMedia("(max-width: 1100px)").matches;
+    const fichesVisibles = volet ? vue.classList.contains("panneau-ouvert") : !vue.classList.contains("panneau-masque");
+    $("bouton-fiches").setAttribute("aria-expanded", String(fichesVisibles));
   }
   if (scene) zoneActive().focus({ preventScroll: true });
   $("bouton-concentration").setAttribute("aria-pressed", String(actif));

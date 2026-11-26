@@ -2,7 +2,7 @@
   'use strict';
   root.CONFIG_APP = Object.freeze({
     nom: 'Omni-Romancier',
-    version: '1.14.0',
+    version: '1.14.1',
     idStockage: 'omni-romancier',
     auteur: 'Ferrus Dantioch',
     contact: 'omni-systeme.choking513@passmail.net',
